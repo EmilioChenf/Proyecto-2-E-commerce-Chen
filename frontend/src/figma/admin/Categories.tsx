@@ -39,6 +39,7 @@ export function Categories() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<Partial<Category>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchCategories().then((rows) => setCategories(rows.map(mapCategory)));
@@ -47,12 +48,14 @@ export function Categories() {
   const handleCreate = () => {
     setSelectedCategory(null);
     setFormData({});
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
     setFormData(category);
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
@@ -79,10 +82,22 @@ export function Categories() {
   };
 
   const handleSave = async () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!formData.name?.trim()) {
+      nextErrors.name = 'El nombre de la categoria es requerido.';
+    }
+
+    setFormErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     try {
       const saved = await saveCategory({
         id_categoria: selectedCategory?.id,
-        nombre: formData.name,
+        nombre: formData.name?.trim(),
       });
 
       const mapped = {
@@ -99,6 +114,7 @@ export function Categories() {
 
       setIsDialogOpen(false);
       setFormData({});
+      setFormErrors({});
       toast.success('Categoria guardada correctamente.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar la categoria.'));
@@ -156,6 +172,7 @@ export function Categories() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Peluches"
               />
+              {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Descripcion</label>

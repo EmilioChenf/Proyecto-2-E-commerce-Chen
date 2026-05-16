@@ -66,6 +66,7 @@ export function Products() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Partial<Product>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -91,12 +92,14 @@ export function Products() {
   const handleCreate = () => {
     setSelectedProduct(null);
     setFormData({});
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
     setFormData(product);
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
@@ -123,13 +126,51 @@ export function Products() {
   };
 
   const handleSave = async () => {
+    const nextErrors: Record<string, string> = {};
+    const price = Number(formData.price);
+    const stock = Number(formData.stock);
+
+    if (!formData.name?.trim()) {
+      nextErrors.name = 'El nombre del producto es requerido.';
+    }
+
+    if (!formData.description?.trim()) {
+      nextErrors.description = 'La descripcion es requerida.';
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+      nextErrors.price = 'El precio debe ser mayor que 0.';
+    }
+
+    if (!Number.isFinite(stock) || stock < 0) {
+      nextErrors.stock = 'El stock no puede ser negativo.';
+    }
+
+    if (!formData.category?.trim()) {
+      nextErrors.category = 'La categoria es requerida.';
+    }
+
+    if (!formData.brand?.trim()) {
+      nextErrors.brand = 'La marca es requerida.';
+    }
+
+    if (!formData.supplier?.trim()) {
+      nextErrors.supplier = 'El proveedor es requerido.';
+    }
+
+    setFormErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     try {
       const saved = await saveProduct({
         id_producto: selectedProduct?.id,
         nombre: formData.name,
         descripcion: formData.description,
-        precio: formData.price,
-        stock: formData.stock,
+        precio: price,
+        stock,
         categoria: formData.category,
         proveedor: formData.supplier,
         marca: formData.brand,
@@ -149,6 +190,7 @@ export function Products() {
 
       setIsDialogOpen(false);
       setFormData({});
+      setFormErrors({});
       toast.success('Producto guardado correctamente.');
       await loadData();
     } catch (error) {
@@ -297,6 +339,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Peluche Panda"
               />
+              {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Descripcion</label>
@@ -309,6 +352,7 @@ export function Products() {
                 rows={3}
                 placeholder="Descripcion detallada del producto"
               />
+              {formErrors.description && <p className="text-sm text-red-600 mt-1">{formErrors.description}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Precio</label>
@@ -321,6 +365,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0.00"
               />
+              {formErrors.price && <p className="text-sm text-red-600 mt-1">{formErrors.price}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
@@ -333,6 +378,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0"
               />
+              {formErrors.stock && <p className="text-sm text-red-600 mt-1">{formErrors.stock}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
@@ -346,6 +392,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Peluches"
               />
+              {formErrors.category && <p className="text-sm text-red-600 mt-1">{formErrors.category}</p>}
               <datalist id="product-categories">
                 {categories.map((category) => (
                   <option key={category} value={category} />
@@ -362,6 +409,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Escandalosos"
               />
+              {formErrors.brand && <p className="text-sm text-red-600 mt-1">{formErrors.brand}</p>}
               <datalist id="product-brands">
                 {brands.map((brand) => (
                   <option key={brand} value={brand} />
@@ -409,6 +457,7 @@ export function Products() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej: Distribuidora ABC"
               />
+              {formErrors.supplier && <p className="text-sm text-red-600 mt-1">{formErrors.supplier}</p>}
               <datalist id="product-suppliers">
                 {suppliers.map((supplier) => (
                   <option key={supplier} value={supplier} />

@@ -18,6 +18,7 @@ import {
 import { saveSupplier, deleteSupplier as deleteSupplierRequest } from '@/services/adminService';
 import { fetchSuppliers } from '@/services/catalogService';
 import { getErrorMessage } from '@/utils/errors';
+import { isValidEmail, isValidPhone } from '@/utils/validation';
 
 interface Supplier {
   id: number;
@@ -43,6 +44,7 @@ export function Suppliers() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [formData, setFormData] = useState<Partial<Supplier>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchSuppliers().then((rows) => setSuppliers(rows.map(mapSupplier)));
@@ -51,12 +53,14 @@ export function Suppliers() {
   const handleCreate = () => {
     setSelectedSupplier(null);
     setFormData({});
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
   const handleEdit = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setFormData(supplier);
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
@@ -83,12 +87,36 @@ export function Suppliers() {
   };
 
   const handleSave = async () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!formData.name?.trim()) {
+      nextErrors.name = 'El nombre del proveedor es requerido.';
+    }
+
+    if (!formData.email?.trim()) {
+      nextErrors.email = 'El email es requerido.';
+    } else if (!isValidEmail(formData.email)) {
+      nextErrors.email = 'Ingresa un email valido.';
+    }
+
+    if (!formData.phone?.trim()) {
+      nextErrors.phone = 'El telefono es requerido.';
+    } else if (!isValidPhone(formData.phone)) {
+      nextErrors.phone = 'El telefono debe tener entre 8 y 15 digitos.';
+    }
+
+    setFormErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     try {
       const saved = await saveSupplier({
         id_proveedor: selectedSupplier?.id,
-        nombre: formData.name,
-        correo: formData.email,
-        telefono: formData.phone,
+        nombre: formData.name?.trim(),
+        correo: formData.email?.trim(),
+        telefono: formData.phone?.trim(),
       });
 
       const mapped = {
@@ -107,6 +135,7 @@ export function Suppliers() {
 
       setIsDialogOpen(false);
       setFormData({});
+      setFormErrors({});
       toast.success('Proveedor guardado correctamente.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el proveedor.'));
@@ -174,6 +203,7 @@ export function Suppliers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Nombre del proveedor"
               />
+              {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -184,6 +214,7 @@ export function Suppliers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="email@ejemplo.com"
               />
+              {formErrors.email && <p className="text-sm text-red-600 mt-1">{formErrors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Telefono</label>
@@ -194,6 +225,7 @@ export function Suppliers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="555-0000"
               />
+              {formErrors.phone && <p className="text-sm text-red-600 mt-1">{formErrors.phone}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Direccion</label>

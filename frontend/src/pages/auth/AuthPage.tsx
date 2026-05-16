@@ -11,6 +11,7 @@ import { Footer } from '@/figma/login/Footer';
 import { InputField } from '@/figma/login/InputField';
 import { PasswordField } from '@/figma/login/PasswordField';
 import { PrimaryButton } from '@/figma/login/PrimaryButton';
+import { isValidEmail, isValidPhone } from '@/utils/validation';
 
 type AuthMode = 'login' | 'register';
 
@@ -77,8 +78,37 @@ export function AuthPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsLoading(true);
     setMessage(null);
+
+    if (!formData.correo.trim()) {
+      setMessage({ type: 'error', text: 'El correo electronico es requerido.' });
+      return;
+    }
+
+    if (!isValidEmail(formData.correo)) {
+      setMessage({ type: 'error', text: 'Ingresa un correo electronico valido.' });
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      setMessage({ type: 'error', text: 'La contrasena es requerida.' });
+      return;
+    }
+
+    if (mode === 'register' && !formData.nombre.trim()) {
+      setMessage({ type: 'error', text: 'El nombre completo es requerido.' });
+      return;
+    }
+
+    if (mode === 'register' && !isValidPhone(formData.telefono)) {
+      setMessage({
+        type: 'error',
+        text: 'El telefono es requerido y debe tener entre 8 y 15 digitos.',
+      });
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const user =

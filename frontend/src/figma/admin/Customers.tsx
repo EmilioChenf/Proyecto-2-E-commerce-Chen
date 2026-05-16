@@ -18,6 +18,7 @@ import {
 import { saveCustomer, deleteCustomer as deleteCustomerRequest } from '@/services/adminService';
 import { fetchCustomers } from '@/services/catalogService';
 import { getErrorMessage } from '@/utils/errors';
+import { isValidEmail, isValidPhone } from '@/utils/validation';
 
 interface Customer {
   id: number;
@@ -43,6 +44,7 @@ export function Customers() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<Partial<Customer>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -52,12 +54,14 @@ export function Customers() {
   const handleCreate = () => {
     setSelectedCustomer(null);
     setFormData({});
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
   const handleEdit = (customer: Customer) => {
     setSelectedCustomer(customer);
     setFormData(customer);
+    setFormErrors({});
     setIsDialogOpen(true);
   };
 
@@ -84,12 +88,36 @@ export function Customers() {
   };
 
   const handleSave = async () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!formData.name?.trim()) {
+      nextErrors.name = 'El nombre completo es requerido.';
+    }
+
+    if (!formData.email?.trim()) {
+      nextErrors.email = 'El email es requerido.';
+    } else if (!isValidEmail(formData.email)) {
+      nextErrors.email = 'Ingresa un email valido.';
+    }
+
+    if (!formData.phone?.trim()) {
+      nextErrors.phone = 'El telefono es requerido.';
+    } else if (!isValidPhone(formData.phone)) {
+      nextErrors.phone = 'El telefono debe tener entre 8 y 15 digitos.';
+    }
+
+    setFormErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
     try {
       const saved = await saveCustomer({
         id_cliente: selectedCustomer?.id,
-        nombre: formData.name,
-        correo: formData.email,
-        telefono: formData.phone,
+        nombre: formData.name?.trim(),
+        correo: formData.email?.trim(),
+        telefono: formData.phone?.trim(),
       });
 
       const mapped = {
@@ -108,6 +136,7 @@ export function Customers() {
 
       setIsDialogOpen(false);
       setFormData({});
+      setFormErrors({});
       toast.success('Cliente guardado correctamente.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el cliente.'));
@@ -199,6 +228,7 @@ export function Customers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Nombre del cliente"
               />
+              {formErrors.name && <p className="text-sm text-red-600 mt-1">{formErrors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
@@ -209,6 +239,7 @@ export function Customers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="email@ejemplo.com"
               />
+              {formErrors.email && <p className="text-sm text-red-600 mt-1">{formErrors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Telefono</label>
@@ -219,6 +250,7 @@ export function Customers() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="555-0000"
               />
+              {formErrors.phone && <p className="text-sm text-red-600 mt-1">{formErrors.phone}</p>}
             </div>
           </div>
           <DialogFooter>

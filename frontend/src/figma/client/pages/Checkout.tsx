@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
 import { formatCurrencyGTQ } from '@/utils/format';
 import { useImageFallback } from '@/utils/images';
+import { isValidEmail, isValidPhone } from '@/utils/validation';
 
 type PaymentMethodName = 'Tarjeta' | 'Efectivo' | 'Transferencia';
 
@@ -60,18 +61,22 @@ export function Checkout() {
 
     if (!formData.email.trim()) {
       nextErrors.email = 'El correo electronico es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       nextErrors.email = 'El correo electronico no es valido';
     }
 
     if (!formData.phone.trim()) {
       nextErrors.phone = 'El telefono es requerido';
-    } else if (!/^\d{8,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+    } else if (!isValidPhone(formData.phone)) {
       nextErrors.phone = 'El telefono debe tener entre 8 y 15 digitos';
     }
 
     if (!paymentOptions[paymentMethod]) {
       nextErrors.paymentMethod = 'Selecciona un metodo de pago valido';
+    }
+
+    if (items.some((item) => item.quantity <= 0)) {
+      nextErrors.items = 'Todos los productos deben tener cantidad mayor que 0';
     }
 
     setErrors(nextErrors);
@@ -289,6 +294,13 @@ export function Checkout() {
                   <p className="text-[#057f63] text-sm mt-3 flex items-center space-x-1">
                     <AlertCircle className="w-4 h-4" />
                     <span>{errors.paymentMethod}</span>
+                  </p>
+                )}
+
+                {errors.items && (
+                  <p className="text-[#057f63] text-sm mt-3 flex items-center space-x-1">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{errors.items}</span>
                   </p>
                 )}
               </div>
