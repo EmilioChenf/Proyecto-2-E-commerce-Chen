@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ClientLayout } from '@/layouts/ClientLayout';
 import { AuthPage } from '@/pages/auth/AuthPage';
-import { AdminPage } from '@/pages/admin/AdminPage';
+import { AdminPage } from '@/pages/Admin/AdminPage';
 import { Home } from '@/figma/client/pages/Home';
 import { Catalog } from '@/figma/client/pages/Catalog';
 import { ProductDetail } from '@/figma/client/pages/ProductDetail';

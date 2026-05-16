@@ -21,5 +21,10 @@
     }
   },
   "include": ["src"],
+  "exclude": [
+    "src/pages/Login/vite.config.ts",
+    "src/pages/Admin/vite.config.ts",
+    "src/pages/Cliente/vite.config.ts"
+  ],
   "references": []
 }
