@@ -77,7 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const checkout = useCallback(
     async (payload: CheckoutPayload) => {
       const sale = await createSale(payload);
-      await Promise.all([refreshCatalog(), refreshOrders()]);
+      Promise.all([refreshCatalog(), refreshOrders()]).catch(() => undefined);
       return sale;
     },
     [refreshCatalog, refreshOrders],

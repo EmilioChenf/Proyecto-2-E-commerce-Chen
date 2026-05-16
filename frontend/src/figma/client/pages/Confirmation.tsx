@@ -5,10 +5,30 @@ import confetti from 'canvas-confetti';
 import { formatCurrencyGTQ } from '@/utils/format';
 import { useImageFallback } from '@/utils/images';
 
+const CONFIRMATION_STORAGE_KEY = 'plushstore_last_order_confirmation';
+
 export function Confirmation() {
   const location = useLocation();
-  const order = location.state?.order;
-  const customer = location.state?.customer;
+  const confirmationState = useMemo(() => {
+    if (location.state?.order) {
+      return location.state;
+    }
+
+    const stored = sessionStorage.getItem(CONFIRMATION_STORAGE_KEY);
+
+    if (!stored) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(stored);
+    } catch (_error) {
+      sessionStorage.removeItem(CONFIRMATION_STORAGE_KEY);
+      return null;
+    }
+  }, [location.state]);
+  const order = confirmationState?.order;
+  const customer = confirmationState?.customer;
 
   useEffect(() => {
     if (order) {
@@ -22,7 +42,7 @@ export function Confirmation() {
 
   const orderItems = useMemo(
     () => {
-      const currentItems = location.state?.items ?? [];
+      const currentItems = confirmationState?.items ?? [];
       const currentDetails = order?.items ?? [];
 
       return currentDetails.map((detail: any) => {
@@ -37,7 +57,7 @@ export function Confirmation() {
         };
       });
     },
-    [location.state, order],
+    [confirmationState, order],
   );
 
   if (!order) {

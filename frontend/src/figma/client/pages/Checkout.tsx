@@ -11,6 +11,8 @@ import { isValidEmail, isValidPhone } from '@/utils/validation';
 
 type PaymentMethodName = 'Tarjeta' | 'Efectivo' | 'Transferencia';
 
+const CONFIRMATION_STORAGE_KEY = 'plushstore_last_order_confirmation';
+
 export function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -26,6 +28,7 @@ export function Checkout() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasCompletedOrder, setHasCompletedOrder] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,7 +49,7 @@ export function Checkout() {
     [paymentMethods],
   );
 
-  if (items.length === 0) {
+  if (items.length === 0 && !hasCompletedOrder) {
     return <Navigate to="/carrito" replace />;
   }
 
@@ -109,14 +112,16 @@ export function Checkout() {
         })),
       });
 
-      clearCart();
-      navigate('/confirmacion', {
-        state: {
-          order,
-          customer: formData,
-          items,
-        },
-      });
+      const confirmationState = {
+        order,
+        customer: formData,
+        items,
+      };
+
+      setHasCompletedOrder(true);
+      sessionStorage.setItem(CONFIRMATION_STORAGE_KEY, JSON.stringify(confirmationState));
+      navigate('/confirmacion', { state: confirmationState });
+      globalThis.setTimeout(clearCart, 0);
     } catch (error: any) {
       setSubmitError(
         error?.response?.data?.message ??
