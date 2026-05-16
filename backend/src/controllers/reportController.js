@@ -4,33 +4,34 @@ const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
 
 export async function dashboard(req, res, next) {
   try {
-    const [[summary]] = await pool.query(
+    const { rows: summaryRows } = await pool.query(
       `SELECT
          (SELECT COUNT(*) FROM productos) AS total_productos,
          (SELECT COUNT(*) FROM productos WHERE stock < 10) AS stock_bajo,
-         (SELECT COUNT(*) FROM ventas WHERE DATE(fecha) = CURDATE()) AS ventas_hoy,
+         (SELECT COUNT(*) FROM ventas WHERE fecha::date = CURRENT_DATE) AS ventas_hoy,
          (SELECT COALESCE(SUM(total), 0)
           FROM ventas
-          WHERE YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())) AS ingresos_mes,
+          WHERE date_trunc('month', fecha) = date_trunc('month', CURRENT_DATE)) AS ingresos_mes,
          (SELECT COUNT(*) FROM clientes) AS total_clientes`,
     );
+    const summary = summaryRows[0];
 
-    const [monthlyRows] = await pool.query(
+    const { rows: monthlyRows } = await pool.query(
       `SELECT
-         YEAR(fecha) AS anio,
-         MONTH(fecha) AS mes_numero,
+         EXTRACT(YEAR FROM fecha)::int AS anio,
+         EXTRACT(MONTH FROM fecha)::int AS mes_numero,
          COALESCE(SUM(total), 0) AS ventas
        FROM ventas
-       WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 5 MONTH)
-       GROUP BY YEAR(fecha), MONTH(fecha)
+       WHERE fecha >= CURRENT_DATE - INTERVAL '5 months'
+       GROUP BY EXTRACT(YEAR FROM fecha), EXTRACT(MONTH FROM fecha)
        ORDER BY anio ASC, mes_numero ASC`,
     );
 
-    const [recentSales] = await pool.query(
+    const { rows: recentSales } = await pool.query(
       `SELECT
          v.id_venta,
          c.nombre AS cliente,
-         DATE_FORMAT(v.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
+         to_char(v.fecha, 'YYYY-MM-DD HH24:MI:SS') AS fecha,
          COALESCE(SUM(dv.cantidad), 0) AS items,
          v.total
        FROM ventas v
@@ -41,7 +42,7 @@ export async function dashboard(req, res, next) {
        LIMIT 5`,
     );
 
-    const [lowStock] = await pool.query(
+    const { rows: lowStock } = await pool.query(
       `SELECT
          id_producto,
          nombre,
@@ -69,29 +70,30 @@ export async function dashboard(req, res, next) {
 
 export async function overview(req, res, next) {
   try {
-    const [[summary]] = await pool.query(
+    const { rows: summaryRows } = await pool.query(
       `SELECT
          COALESCE(SUM(total), 0) AS ingresos_totales,
          COALESCE((SELECT SUM(cantidad) FROM detalle_venta), 0) AS productos_vendidos,
          COALESCE(AVG(total), 0) AS ticket_promedio,
          COALESCE(SUM(CASE
-           WHEN YEAR(fecha) = YEAR(CURDATE()) AND MONTH(fecha) = MONTH(CURDATE())
+           WHEN date_trunc('month', fecha) = date_trunc('month', CURRENT_DATE)
            THEN total ELSE 0 END), 0) AS ventas_mes_actual
        FROM ventas`,
     );
+    const summary = summaryRows[0];
 
-    const [salesByMonthRows] = await pool.query(
+    const { rows: salesByMonthRows } = await pool.query(
       `SELECT
-         YEAR(fecha) AS anio,
-         MONTH(fecha) AS mes_numero,
+         EXTRACT(YEAR FROM fecha)::int AS anio,
+         EXTRACT(MONTH FROM fecha)::int AS mes_numero,
          COALESCE(SUM(total), 0) AS ventas
        FROM ventas
-       WHERE fecha >= DATE_SUB(CURDATE(), INTERVAL 5 MONTH)
-       GROUP BY YEAR(fecha), MONTH(fecha)
+       WHERE fecha >= CURRENT_DATE - INTERVAL '5 months'
+       GROUP BY EXTRACT(YEAR FROM fecha), EXTRACT(MONTH FROM fecha)
        ORDER BY anio ASC, mes_numero ASC`,
     );
 
-    const [salesByPaymentRows] = await pool.query(
+    const { rows: salesByPaymentRows } = await pool.query(
       `SELECT
          mp.nombre,
          COUNT(v.id_venta) AS total_ventas,
@@ -107,18 +109,18 @@ export async function overview(req, res, next) {
       0,
     );
 
-    const [recentSales] = await pool.query(
-      `SELECT id_venta, DATE_FORMAT(fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
+    const { rows: recentSales } = await pool.query(
+      `SELECT id_venta, to_char(fecha, 'YYYY-MM-DD HH24:MI:SS') AS fecha,
               cliente, usuario, metodo_pago, total
        FROM vista_resumen_ventas
        ORDER BY fecha DESC
        LIMIT 20`,
     );
 
-    const [salesByDate] = await pool.query(
+    const { rows: salesByDate } = await pool.query(
       `SELECT fecha_dia AS fecha, COUNT(*) AS ventas, COALESCE(SUM(total), 0) AS ingresos
        FROM (
-         SELECT DATE(fecha) AS fecha_dia, total
+         SELECT fecha::date AS fecha_dia, total
          FROM ventas
        ) ventas_por_dia
        GROUP BY fecha_dia
@@ -126,7 +128,7 @@ export async function overview(req, res, next) {
        LIMIT 30`,
     );
 
-    const [bestSellers] = await pool.query(
+    const { rows: bestSellers } = await pool.query(
       `WITH ranking_productos AS (
          SELECT
            p.id_producto,
@@ -144,7 +146,7 @@ export async function overview(req, res, next) {
        LIMIT 10`,
     );
 
-    const [havingProducts] = await pool.query(
+    const { rows: havingProducts } = await pool.query(
       `SELECT
          p.id_producto,
          p.nombre,
@@ -157,7 +159,7 @@ export async function overview(req, res, next) {
        ORDER BY unidades DESC, ingresos DESC`,
     );
 
-    const [lowStock] = await pool.query(
+    const { rows: lowStock } = await pool.query(
       `SELECT
          id_producto,
          nombre,
@@ -169,7 +171,7 @@ export async function overview(req, res, next) {
        ORDER BY stock ASC, nombre ASC`,
     );
 
-    const [salesByProduct] = await pool.query(
+    const { rows: salesByProduct } = await pool.query(
       `SELECT
          p.id_producto,
          p.nombre,
@@ -181,7 +183,7 @@ export async function overview(req, res, next) {
        LIMIT 10`,
     );
 
-    const [topCustomers] = await pool.query(
+    const { rows: topCustomers } = await pool.query(
       `SELECT
          c.id_cliente,
          c.nombre,
@@ -194,14 +196,14 @@ export async function overview(req, res, next) {
        LIMIT 10`,
     );
 
-    const [belowAverageStock] = await pool.query(
+    const { rows: belowAverageStock } = await pool.query(
       `SELECT id_producto, nombre, stock
        FROM productos
        WHERE stock < (SELECT AVG(stock) FROM productos)
        ORDER BY stock ASC, nombre ASC`,
     );
 
-    const [customersAboveAverage] = await pool.query(
+    const { rows: customersAboveAverage } = await pool.query(
       `SELECT c.id_cliente, c.nombre, COALESCE(SUM(v.total), 0) AS gasto
        FROM clientes c
        INNER JOIN ventas v ON v.id_cliente = c.id_cliente
@@ -210,8 +212,8 @@ export async function overview(req, res, next) {
        ORDER BY gasto DESC`,
     );
 
-    const [salesJoin] = await pool.query(
-      `SELECT v.id_venta, DATE_FORMAT(v.fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
+    const { rows: salesJoin } = await pool.query(
+      `SELECT v.id_venta, to_char(v.fecha, 'YYYY-MM-DD HH24:MI:SS') AS fecha,
               c.nombre AS cliente, u.nombre AS usuario, mp.nombre AS metodo_pago, v.total
        FROM ventas v
        INNER JOIN clientes c ON c.id_cliente = v.id_cliente
@@ -221,7 +223,7 @@ export async function overview(req, res, next) {
        LIMIT 10`,
     );
 
-    const [detailJoin] = await pool.query(
+    const { rows: detailJoin } = await pool.query(
       `SELECT dv.id_detalle, dv.id_venta, p.nombre AS producto,
               c.nombre AS categoria, m.nombre AS marca,
               dv.cantidad, dv.precio_unitario, dv.subtotal
@@ -233,7 +235,7 @@ export async function overview(req, res, next) {
        LIMIT 10`,
     );
 
-    const [productsJoin] = await pool.query(
+    const { rows: productsJoin } = await pool.query(
       `SELECT p.id_producto, p.nombre, p.precio, p.stock,
               c.nombre AS categoria, pr.nombre AS proveedor, m.nombre AS marca
        FROM productos p
@@ -403,7 +405,7 @@ const REPORTS = {
       { key: 'metodo_pago', label: 'Metodo de pago' },
       { key: 'total', label: 'Total' },
     ],
-    query: `SELECT id_venta, DATE_FORMAT(fecha, '%Y-%m-%d %H:%i:%s') AS fecha,
+    query: `SELECT id_venta, to_char(fecha, 'YYYY-MM-DD HH24:MI:SS') AS fecha,
                    cliente, usuario, metodo_pago, total
             FROM vista_resumen_ventas
             ORDER BY fecha DESC
@@ -474,7 +476,7 @@ const REPORTS = {
                    COUNT(*) AS ventas,
                    COALESCE(SUM(total), 0) AS ingresos
             FROM (
-              SELECT DATE_FORMAT(fecha, '%Y-%m-%d') AS fecha_dia, total
+              SELECT to_char(fecha, 'YYYY-MM-DD') AS fecha_dia, total
               FROM ventas
             ) ventas_por_dia
             GROUP BY fecha_dia
@@ -509,7 +511,7 @@ async function sendReport(req, res, next, reportId, format) {
       return;
     }
 
-    const [rows] = await pool.query(report.query);
+    const { rows } = await pool.query(report.query);
 
     if (format === 'csv') {
       const csv = buildCsv(report.columns, rows);

@@ -49,12 +49,12 @@ export async function login(req, res, next) {
 }
 
 export async function register(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const { nombre, correo, password, telefono = '' } = req.body;
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
     const existingUser = await getUserWithRoleByEmail(connection, correo);
     if (existingUser) {
@@ -64,25 +64,27 @@ export async function register(req, res, next) {
     const clientRoleId = await getRoleId(connection, 'CLIENTE');
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const [result] = await connection.query(
+    const { rows } = await connection.query(
       `INSERT INTO usuarios (nombre, correo, password, id_rol, google_id)
-       VALUES (?, ?, ?, ?, NULL)`,
+       VALUES ($1, $2, $3, $4, NULL)
+       RETURNING id_usuario`,
       [nombre, correo, passwordHash, clientRoleId],
     );
+    const userId = rows[0].id_usuario;
 
     await upsertCustomerProfile(connection, {
-      userId: result.insertId,
+      userId,
       nombre,
       correo,
       telefono,
     });
 
-    await connection.commit();
+    await connection.query('COMMIT');
 
-    const user = await getUserWithRoleById(pool, result.insertId);
+    const user = await getUserWithRoleById(pool, userId);
     res.status(201).json(buildAuthResponse(user));
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();
@@ -90,7 +92,7 @@ export async function register(req, res, next) {
 }
 
 export async function loginWithGoogle(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const { accessToken } = req.body;
@@ -100,28 +102,30 @@ export async function loginWithGoogle(req, res, next) {
       throw createHttpError(401, 'La cuenta de Google no devolvio informacion suficiente.');
     }
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
     let user = await getUserWithRoleByEmail(connection, googleProfile.email);
 
     if (!user) {
       const clientRoleId = await getRoleId(connection, 'CLIENTE');
 
-      const [result] = await connection.query(
+      const { rows } = await connection.query(
         `INSERT INTO usuarios (nombre, correo, password, id_rol, google_id)
-         VALUES (?, ?, NULL, ?, ?)`,
+         VALUES ($1, $2, NULL, $3, $4)
+         RETURNING id_usuario`,
         [googleProfile.name ?? googleProfile.email, googleProfile.email, clientRoleId, googleProfile.sub],
       );
+      const userId = rows[0].id_usuario;
 
       await upsertCustomerProfile(connection, {
-        userId: result.insertId,
+        userId,
         nombre: googleProfile.name ?? googleProfile.email,
         correo: googleProfile.email,
         telefono: '',
       });
     } else if (!user.google_id) {
       await connection.query(
-        'UPDATE usuarios SET google_id = ? WHERE id_usuario = ?',
+        'UPDATE usuarios SET google_id = $1 WHERE id_usuario = $2',
         [googleProfile.sub, user.id_usuario],
       );
       await upsertCustomerProfile(connection, {
@@ -132,12 +136,12 @@ export async function loginWithGoogle(req, res, next) {
       });
     }
 
-    await connection.commit();
+    await connection.query('COMMIT');
 
     user = await getUserWithRoleByEmail(pool, googleProfile.email);
     res.json(buildAuthResponse(user));
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();

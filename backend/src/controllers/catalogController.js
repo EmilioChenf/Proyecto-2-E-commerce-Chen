@@ -35,7 +35,7 @@ function mapProductRow(row, { bestSellerIds, newestIds }) {
 }
 
 async function getProductPresentationSets() {
-  const [bestSellerRows] = await pool.query(
+  const { rows: bestSellerRows } = await pool.query(
     `SELECT dv.id_producto, SUM(dv.cantidad) AS unidades
      FROM detalle_venta dv
      GROUP BY dv.id_producto
@@ -43,7 +43,7 @@ async function getProductPresentationSets() {
      LIMIT 5`,
   );
 
-  const [newestRows] = await pool.query(
+  const { rows: newestRows } = await pool.query(
     'SELECT id_producto FROM productos ORDER BY id_producto DESC LIMIT 4',
   );
 
@@ -55,7 +55,7 @@ async function getProductPresentationSets() {
 
 export async function listCategories(_req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       'SELECT id_categoria, nombre FROM categorias ORDER BY nombre ASC',
     );
 
@@ -73,13 +73,13 @@ export async function listCategories(_req, res, next) {
 export async function createCategory(req, res, next) {
   try {
     const { nombre } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO categorias (nombre) VALUES (?)',
+    const { rows } = await pool.query(
+      'INSERT INTO categorias (nombre) VALUES ($1) RETURNING id_categoria',
       [nombre.trim()],
     );
 
     res.status(201).json({
-      id_categoria: result.insertId,
+      id_categoria: rows[0].id_categoria,
       nombre: nombre.trim(),
       descripcion: getCategoryDescription(nombre.trim()),
     });
@@ -93,12 +93,12 @@ export async function updateCategory(req, res, next) {
     const { id } = req.params;
     const { nombre } = req.body;
 
-    const [result] = await pool.query(
-      'UPDATE categorias SET nombre = ? WHERE id_categoria = ?',
+    const result = await pool.query(
+      'UPDATE categorias SET nombre = $1 WHERE id_categoria = $2',
       [nombre.trim(), id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'La categoria no existe.');
     }
 
@@ -114,12 +114,12 @@ export async function updateCategory(req, res, next) {
 
 export async function deleteCategory(req, res, next) {
   try {
-    const [result] = await pool.query(
-      'DELETE FROM categorias WHERE id_categoria = ?',
+    const result = await pool.query(
+      'DELETE FROM categorias WHERE id_categoria = $1',
       [req.params.id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'La categoria no existe.');
     }
 
@@ -131,7 +131,7 @@ export async function deleteCategory(req, res, next) {
 
 export async function listSuppliers(_req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT id_proveedor, nombre, correo, telefono
        FROM proveedores
        ORDER BY nombre ASC`,
@@ -145,14 +145,15 @@ export async function listSuppliers(_req, res, next) {
 export async function createSupplier(req, res, next) {
   try {
     const { nombre, correo, telefono } = req.body;
-    const [result] = await pool.query(
+    const { rows } = await pool.query(
       `INSERT INTO proveedores (nombre, correo, telefono)
-       VALUES (?, ?, ?)`,
+       VALUES ($1, $2, $3)
+       RETURNING id_proveedor`,
       [nombre.trim(), correo.trim(), telefono.trim()],
     );
 
     res.status(201).json({
-      id_proveedor: result.insertId,
+      id_proveedor: rows[0].id_proveedor,
       nombre: nombre.trim(),
       correo: correo.trim(),
       telefono: telefono.trim(),
@@ -167,14 +168,14 @@ export async function updateSupplier(req, res, next) {
     const { id } = req.params;
     const { nombre, correo, telefono } = req.body;
 
-    const [result] = await pool.query(
+    const result = await pool.query(
       `UPDATE proveedores
-       SET nombre = ?, correo = ?, telefono = ?
-       WHERE id_proveedor = ?`,
+       SET nombre = $1, correo = $2, telefono = $3
+       WHERE id_proveedor = $4`,
       [nombre.trim(), correo.trim(), telefono.trim(), id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El proveedor no existe.');
     }
 
@@ -191,12 +192,12 @@ export async function updateSupplier(req, res, next) {
 
 export async function deleteSupplier(req, res, next) {
   try {
-    const [result] = await pool.query(
-      'DELETE FROM proveedores WHERE id_proveedor = ?',
+    const result = await pool.query(
+      'DELETE FROM proveedores WHERE id_proveedor = $1',
       [req.params.id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El proveedor no existe.');
     }
 
@@ -208,7 +209,7 @@ export async function deleteSupplier(req, res, next) {
 
 export async function listBrands(_req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       'SELECT id_marca, nombre FROM marcas ORDER BY nombre ASC',
     );
     res.json(rows);
@@ -219,7 +220,7 @@ export async function listBrands(_req, res, next) {
 
 export async function listPaymentMethods(_req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       'SELECT id_metodo_pago, nombre FROM metodos_pago ORDER BY id_metodo_pago ASC',
     );
 
@@ -239,13 +240,13 @@ export async function createPaymentMethod(req, res, next) {
     const { nombre } = req.body;
     const trimmed = nombre.trim();
 
-    const [result] = await pool.query(
-      'INSERT INTO metodos_pago (nombre) VALUES (?)',
+    const { rows } = await pool.query(
+      'INSERT INTO metodos_pago (nombre) VALUES ($1) RETURNING id_metodo_pago',
       [trimmed],
     );
 
     res.status(201).json({
-      id_metodo_pago: result.insertId,
+      id_metodo_pago: rows[0].id_metodo_pago,
       nombre: trimmed,
       ...getPaymentPresentation(trimmed),
     });
@@ -260,12 +261,12 @@ export async function updatePaymentMethod(req, res, next) {
     const { nombre } = req.body;
     const trimmed = nombre.trim();
 
-    const [result] = await pool.query(
-      'UPDATE metodos_pago SET nombre = ? WHERE id_metodo_pago = ?',
+    const result = await pool.query(
+      'UPDATE metodos_pago SET nombre = $1 WHERE id_metodo_pago = $2',
       [trimmed, id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El metodo de pago no existe.');
     }
 
@@ -281,12 +282,12 @@ export async function updatePaymentMethod(req, res, next) {
 
 export async function deletePaymentMethod(req, res, next) {
   try {
-    const [result] = await pool.query(
-      'DELETE FROM metodos_pago WHERE id_metodo_pago = ?',
+    const result = await pool.query(
+      'DELETE FROM metodos_pago WHERE id_metodo_pago = $1',
       [req.params.id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El metodo de pago no existe.');
     }
 
@@ -311,18 +312,19 @@ export async function listProducts(req, res, next) {
 
     if (search) {
       filters.push(
-        '(p.nombre LIKE ? OR p.descripcion LIKE ? OR m.nombre LIKE ? OR c.nombre LIKE ?)',
+        `(p.nombre ILIKE $${values.length + 1} OR p.descripcion ILIKE $${values.length + 2}
+          OR m.nombre ILIKE $${values.length + 3} OR c.nombre ILIKE $${values.length + 4})`,
       );
       values.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     if (category) {
-      filters.push('(c.nombre = ? OR c.id_categoria = ?)');
+      filters.push(`(c.nombre = $${values.length + 1} OR c.id_categoria = $${values.length + 2})`);
       values.push(String(category), Number(category) || 0);
     }
 
     if (brand) {
-      filters.push('(m.nombre = ? OR m.id_marca = ?)');
+      filters.push(`(m.nombre = $${values.length + 1} OR m.id_marca = $${values.length + 2})`);
       values.push(String(brand), Number(brand) || 0);
     }
 
@@ -339,7 +341,7 @@ export async function listProducts(req, res, next) {
 
     const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          p.id_producto,
          p.nombre,
@@ -377,7 +379,7 @@ export async function listProducts(req, res, next) {
 
 export async function getProductById(req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          p.id_producto,
          p.nombre,
@@ -395,7 +397,7 @@ export async function getProductById(req, res, next) {
        INNER JOIN categorias c ON c.id_categoria = p.id_categoria
        INNER JOIN proveedores pr ON pr.id_proveedor = p.id_proveedor
        INNER JOIN marcas m ON m.id_marca = p.id_marca
-       WHERE p.id_producto = ?
+       WHERE p.id_producto = $1
        LIMIT 1`,
       [req.params.id],
     );
@@ -412,7 +414,7 @@ export async function getProductById(req, res, next) {
 }
 
 export async function createProduct(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const {
@@ -429,16 +431,17 @@ export async function createProduct(req, res, next) {
       marca,
     } = req.body;
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
     const categoryId = await resolveCategoryId(connection, id_categoria ?? categoria);
     const brandId = await resolveBrandId(connection, id_marca ?? marca);
     const supplierId = await resolveSupplierId(connection, id_proveedor ?? proveedor);
 
-    const [result] = await connection.query(
+    const { rows } = await connection.query(
       `INSERT INTO productos
        (nombre, descripcion, precio, stock, imagen, id_categoria, id_proveedor, id_marca)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id_producto`,
       [
         nombre.trim(),
         descripcion.trim(),
@@ -451,12 +454,12 @@ export async function createProduct(req, res, next) {
       ],
     );
 
-    await connection.commit();
+    await connection.query('COMMIT');
 
-    req.params.id = String(result.insertId);
+    req.params.id = String(rows[0].id_producto);
     return getProductById(req, res, next);
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();
@@ -464,7 +467,7 @@ export async function createProduct(req, res, next) {
 }
 
 export async function updateProduct(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const {
@@ -481,17 +484,17 @@ export async function updateProduct(req, res, next) {
       marca,
     } = req.body;
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
     const categoryId = await resolveCategoryId(connection, id_categoria ?? categoria);
     const brandId = await resolveBrandId(connection, id_marca ?? marca);
     const supplierId = await resolveSupplierId(connection, id_proveedor ?? proveedor);
 
-    const [result] = await connection.query(
+    const result = await connection.query(
       `UPDATE productos
-       SET nombre = ?, descripcion = ?, precio = ?, stock = ?, imagen = ?,
-           id_categoria = ?, id_proveedor = ?, id_marca = ?
-       WHERE id_producto = ?`,
+       SET nombre = $1, descripcion = $2, precio = $3, stock = $4, imagen = $5,
+           id_categoria = $6, id_proveedor = $7, id_marca = $8
+       WHERE id_producto = $9`,
       [
         nombre.trim(),
         descripcion.trim(),
@@ -505,14 +508,14 @@ export async function updateProduct(req, res, next) {
       ],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El producto no existe.');
     }
 
-    await connection.commit();
+    await connection.query('COMMIT');
     return getProductById(req, res, next);
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();
@@ -521,12 +524,12 @@ export async function updateProduct(req, res, next) {
 
 export async function deleteProduct(req, res, next) {
   try {
-    const [result] = await pool.query(
-      'DELETE FROM productos WHERE id_producto = ?',
+    const result = await pool.query(
+      'DELETE FROM productos WHERE id_producto = $1',
       [req.params.id],
     );
 
-    if (!result.affectedRows) {
+    if (!result.rowCount) {
       throw createHttpError(404, 'El producto no existe.');
     }
 

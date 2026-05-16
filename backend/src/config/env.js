@@ -26,8 +26,9 @@ export const env = {
   ),
   frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:8080',
   db: {
+    databaseUrl: process.env.DATABASE_URL,
     host: process.env.DB_HOST ?? 'localhost',
-    port: toNumber(process.env.DB_PORT, 3306),
+    port: toNumber(process.env.DB_PORT, 5432),
     database: process.env.DB_NAME ?? 'tienda_peluches',
     user: process.env.DB_USER ?? 'proy2',
     password: process.env.DB_PASSWORD ?? 'secret',

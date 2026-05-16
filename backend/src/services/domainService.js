@@ -1,8 +1,8 @@
 import { createHttpError } from '../utils/httpError.js';
 
 export async function getRoleId(executor, roleName) {
-  const [rows] = await executor.query(
-    'SELECT id_rol FROM roles WHERE nombre = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_rol FROM roles WHERE nombre = $1 LIMIT 1',
     [roleName],
   );
 
@@ -14,11 +14,11 @@ export async function getRoleId(executor, roleName) {
 }
 
 export async function getUserWithRoleById(executor, userId) {
-  const [rows] = await executor.query(
+  const { rows } = await executor.query(
     `SELECT u.id_usuario, u.nombre, u.correo, u.password, u.google_id, r.nombre AS rol
      FROM usuarios u
      INNER JOIN roles r ON r.id_rol = u.id_rol
-     WHERE u.id_usuario = ?
+     WHERE u.id_usuario = $1
      LIMIT 1`,
     [userId],
   );
@@ -27,11 +27,11 @@ export async function getUserWithRoleById(executor, userId) {
 }
 
 export async function getUserWithRoleByEmail(executor, email) {
-  const [rows] = await executor.query(
+  const { rows } = await executor.query(
     `SELECT u.id_usuario, u.nombre, u.correo, u.password, u.google_id, r.nombre AS rol
      FROM usuarios u
      INNER JOIN roles r ON r.id_rol = u.id_rol
-     WHERE u.correo = ?
+     WHERE u.correo = $1
      LIMIT 1`,
     [email],
   );
@@ -43,8 +43,8 @@ export async function upsertCustomerProfile(
   executor,
   { userId, nombre, correo, telefono },
 ) {
-  const [rows] = await executor.query(
-    'SELECT id_cliente FROM clientes WHERE id_usuario = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_cliente FROM clientes WHERE id_usuario = $1 LIMIT 1',
     [userId],
   );
 
@@ -53,20 +53,21 @@ export async function upsertCustomerProfile(
   if (rows.length) {
     await executor.query(
       `UPDATE clientes
-       SET nombre = ?, correo = ?, telefono = ?
-       WHERE id_usuario = ?`,
+       SET nombre = $1, correo = $2, telefono = $3
+       WHERE id_usuario = $4`,
       [nombre, correo, phone, userId],
     );
     return rows[0].id_cliente;
   }
 
-  const [result] = await executor.query(
+  const { rows: insertedRows } = await executor.query(
     `INSERT INTO clientes (nombre, correo, telefono, id_usuario)
-     VALUES (?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4)
+     RETURNING id_cliente`,
     [nombre, correo, phone, userId],
   );
 
-  return result.insertId;
+  return insertedRows[0].id_cliente;
 }
 
 export async function resolveCategoryId(executor, value) {
@@ -78,8 +79,8 @@ export async function resolveCategoryId(executor, value) {
   const parsed = Number(normalized);
 
   if (Number.isFinite(parsed) && parsed > 0) {
-    const [rows] = await executor.query(
-      'SELECT id_categoria FROM categorias WHERE id_categoria = ? LIMIT 1',
+    const { rows } = await executor.query(
+      'SELECT id_categoria FROM categorias WHERE id_categoria = $1 LIMIT 1',
       [parsed],
     );
 
@@ -90,8 +91,8 @@ export async function resolveCategoryId(executor, value) {
     return parsed;
   }
 
-  const [rows] = await executor.query(
-    'SELECT id_categoria FROM categorias WHERE nombre = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_categoria FROM categorias WHERE nombre = $1 LIMIT 1',
     [normalized],
   );
 
@@ -99,12 +100,12 @@ export async function resolveCategoryId(executor, value) {
     return rows[0].id_categoria;
   }
 
-  const [result] = await executor.query(
-    'INSERT INTO categorias (nombre) VALUES (?)',
+  const { rows: insertedRows } = await executor.query(
+    'INSERT INTO categorias (nombre) VALUES ($1) RETURNING id_categoria',
     [normalized],
   );
 
-  return result.insertId;
+  return insertedRows[0].id_categoria;
 }
 
 export async function resolveBrandId(executor, value) {
@@ -116,8 +117,8 @@ export async function resolveBrandId(executor, value) {
   const parsed = Number(normalized);
 
   if (Number.isFinite(parsed) && parsed > 0) {
-    const [rows] = await executor.query(
-      'SELECT id_marca FROM marcas WHERE id_marca = ? LIMIT 1',
+    const { rows } = await executor.query(
+      'SELECT id_marca FROM marcas WHERE id_marca = $1 LIMIT 1',
       [parsed],
     );
 
@@ -128,8 +129,8 @@ export async function resolveBrandId(executor, value) {
     return parsed;
   }
 
-  const [rows] = await executor.query(
-    'SELECT id_marca FROM marcas WHERE nombre = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_marca FROM marcas WHERE nombre = $1 LIMIT 1',
     [normalized],
   );
 
@@ -137,12 +138,12 @@ export async function resolveBrandId(executor, value) {
     return rows[0].id_marca;
   }
 
-  const [result] = await executor.query(
-    'INSERT INTO marcas (nombre) VALUES (?)',
+  const { rows: insertedRows } = await executor.query(
+    'INSERT INTO marcas (nombre) VALUES ($1) RETURNING id_marca',
     [normalized],
   );
 
-  return result.insertId;
+  return insertedRows[0].id_marca;
 }
 
 export async function resolveSupplierId(executor, value) {
@@ -154,8 +155,8 @@ export async function resolveSupplierId(executor, value) {
   const parsed = Number(normalized);
 
   if (Number.isFinite(parsed) && parsed > 0) {
-    const [rows] = await executor.query(
-      'SELECT id_proveedor FROM proveedores WHERE id_proveedor = ? LIMIT 1',
+    const { rows } = await executor.query(
+      'SELECT id_proveedor FROM proveedores WHERE id_proveedor = $1 LIMIT 1',
       [parsed],
     );
 
@@ -166,8 +167,8 @@ export async function resolveSupplierId(executor, value) {
     return parsed;
   }
 
-  const [rows] = await executor.query(
-    'SELECT id_proveedor FROM proveedores WHERE nombre = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_proveedor FROM proveedores WHERE nombre = $1 LIMIT 1',
     [normalized],
   );
 
@@ -190,8 +191,8 @@ export async function resolvePaymentMethodId(executor, value) {
   const parsed = Number(normalized);
 
   if (Number.isFinite(parsed) && parsed > 0) {
-    const [rows] = await executor.query(
-      'SELECT id_metodo_pago FROM metodos_pago WHERE id_metodo_pago = ? LIMIT 1',
+    const { rows } = await executor.query(
+      'SELECT id_metodo_pago FROM metodos_pago WHERE id_metodo_pago = $1 LIMIT 1',
       [parsed],
     );
 
@@ -202,8 +203,8 @@ export async function resolvePaymentMethodId(executor, value) {
     return parsed;
   }
 
-  const [rows] = await executor.query(
-    'SELECT id_metodo_pago FROM metodos_pago WHERE nombre = ? LIMIT 1',
+  const { rows } = await executor.query(
+    'SELECT id_metodo_pago FROM metodos_pago WHERE nombre = $1 LIMIT 1',
     [normalized],
   );
 

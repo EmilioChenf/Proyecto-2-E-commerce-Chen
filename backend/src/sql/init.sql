@@ -1,40 +1,27 @@
-CREATE DATABASE IF NOT EXISTS tienda_peluches
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-CREATE USER IF NOT EXISTS 'proy2'@'%' IDENTIFIED BY 'secret';
-ALTER USER 'proy2'@'%' IDENTIFIED BY 'secret';
-GRANT ALL PRIVILEGES ON tienda_peluches.* TO 'proy2'@'%';
-FLUSH PRIVILEGES;
-
-USE tienda_peluches;
-
-SET NAMES utf8mb4;
-
 CREATE TABLE IF NOT EXISTS categorias (
-  id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+  id_categoria SERIAL PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL UNIQUE
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS proveedores (
-  id_proveedor INT AUTO_INCREMENT PRIMARY KEY,
+  id_proveedor SERIAL PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL UNIQUE,
   correo VARCHAR(150) NOT NULL UNIQUE,
   telefono VARCHAR(30) NOT NULL
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS marcas (
-  id_marca INT AUTO_INCREMENT PRIMARY KEY,
+  id_marca SERIAL PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL UNIQUE
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS roles (
-  id_rol INT AUTO_INCREMENT PRIMARY KEY,
+  id_rol SERIAL PRIMARY KEY,
   nombre VARCHAR(50) NOT NULL UNIQUE
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS usuarios (
-  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+  id_usuario SERIAL PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL,
   correo VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NULL,
@@ -44,10 +31,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
     FOREIGN KEY (id_rol) REFERENCES roles (id_rol)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS clientes (
-  id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+  id_cliente SERIAL PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL,
   correo VARCHAR(150) NOT NULL UNIQUE,
   telefono VARCHAR(30) NOT NULL,
@@ -56,15 +43,15 @@ CREATE TABLE IF NOT EXISTS clientes (
     FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS metodos_pago (
-  id_metodo_pago INT AUTO_INCREMENT PRIMARY KEY,
+  id_metodo_pago SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL UNIQUE
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS productos (
-  id_producto INT AUTO_INCREMENT PRIMARY KEY,
+  id_producto SERIAL PRIMARY KEY,
   nombre VARCHAR(180) NOT NULL,
   descripcion TEXT NOT NULL,
   precio DECIMAL(10, 2) NOT NULL,
@@ -85,14 +72,14 @@ CREATE TABLE IF NOT EXISTS productos (
     FOREIGN KEY (id_marca) REFERENCES marcas (id_marca)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS ventas (
-  id_venta INT AUTO_INCREMENT PRIMARY KEY,
+  id_venta SERIAL PRIMARY KEY,
   id_cliente INT NOT NULL,
   id_usuario INT NOT NULL,
   id_metodo_pago INT NOT NULL,
-  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   total DECIMAL(10, 2) NOT NULL,
   CONSTRAINT fk_ventas_clientes
     FOREIGN KEY (id_cliente) REFERENCES clientes (id_cliente)
@@ -106,10 +93,10 @@ CREATE TABLE IF NOT EXISTS ventas (
     FOREIGN KEY (id_metodo_pago) REFERENCES metodos_pago (id_metodo_pago)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
-) ENGINE=InnoDB;
+);
 
 CREATE TABLE IF NOT EXISTS detalle_venta (
-  id_detalle INT AUTO_INCREMENT PRIMARY KEY,
+  id_detalle SERIAL PRIMARY KEY,
   id_venta INT NOT NULL,
   id_producto INT NOT NULL,
   cantidad INT NOT NULL,
@@ -123,25 +110,25 @@ CREATE TABLE IF NOT EXISTS detalle_venta (
     FOREIGN KEY (id_producto) REFERENCES productos (id_producto)
     ON UPDATE CASCADE
     ON DELETE RESTRICT
-) ENGINE=InnoDB;
+);
 
-CREATE INDEX idx_usuarios_correo ON usuarios (correo);
-CREATE INDEX idx_productos_nombre ON productos (nombre);
-CREATE INDEX idx_ventas_fecha ON ventas (fecha);
-CREATE INDEX idx_detalle_venta_producto ON detalle_venta (id_producto);
+CREATE INDEX IF NOT EXISTS idx_usuarios_correo ON usuarios (correo);
+CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos (nombre);
+CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas (fecha);
+CREATE INDEX IF NOT EXISTS idx_detalle_venta_producto ON detalle_venta (id_producto);
 
 INSERT INTO roles (id_rol, nombre)
 VALUES
   (1, 'ADMIN'),
   (2, 'CLIENTE')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+ON CONFLICT (id_rol) DO UPDATE SET nombre = EXCLUDED.nombre;
 
 INSERT INTO metodos_pago (id_metodo_pago, nombre)
 VALUES
   (1, 'Efectivo'),
   (2, 'Tarjeta'),
   (3, 'Transferencia')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+ON CONFLICT (id_metodo_pago) DO UPDATE SET nombre = EXCLUDED.nombre;
 
 INSERT INTO categorias (id_categoria, nombre)
 VALUES
@@ -157,47 +144,47 @@ VALUES
   (10, 'Libretas'),
   (11, 'Mousepads'),
   (12, 'Figuras')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+ON CONFLICT (id_categoria) DO UPDATE SET nombre = EXCLUDED.nombre;
 
 INSERT INTO marcas (id_marca, nombre)
 VALUES
   (1, 'Escandalosos'),
   (2, 'Snoopy')
-ON DUPLICATE KEY UPDATE nombre = VALUES(nombre);
+ON CONFLICT (id_marca) DO UPDATE SET nombre = EXCLUDED.nombre;
 
 INSERT INTO proveedores (id_proveedor, nombre, correo, telefono)
 VALUES
   (1, 'Distribuidora Escandalosos GT', 'ventas@escandalososgt.com', '555-0101'),
   (2, 'Peanuts Imports Guatemala', 'contacto@peanutsgt.com', '555-0202'),
   (3, 'Merchandising Plus Guatemala', 'info@merchplusgt.com', '555-0303')
-ON DUPLICATE KEY UPDATE
-  nombre = VALUES(nombre),
-  correo = VALUES(correo),
-  telefono = VALUES(telefono);
+ON CONFLICT (id_proveedor) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  correo = EXCLUDED.correo,
+  telefono = EXCLUDED.telefono;
 
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, google_id)
 VALUES
-  (1, 'Administrador Principal', 'admin@tienda.com', '$2b$10$0Q9aYFnQ8n1HqpNwHewtyeTlBsmGSc2QpORIyoJN/R4dT6o6zUb.i', 1, NULL),
-  (2, 'Cliente Demo', 'cliente@tienda.com', '$2b$10$9cc.dO93t.niu7UMalJ/NeZqnmuXpdRpmWix8kFeOcVrCvEyfGMcq', 2, NULL),
-  (3, 'Carlos Ruiz', 'carlos@cliente.com', '$2b$10$9cc.dO93t.niu7UMalJ/NeZqnmuXpdRpmWix8kFeOcVrCvEyfGMcq', 2, NULL),
-  (4, 'Ana Lopez', 'ana@cliente.com', '$2b$10$9cc.dO93t.niu7UMalJ/NeZqnmuXpdRpmWix8kFeOcVrCvEyfGMcq', 2, NULL)
-ON DUPLICATE KEY UPDATE
-  nombre = VALUES(nombre),
-  correo = VALUES(correo),
-  password = VALUES(password),
-  id_rol = VALUES(id_rol),
-  google_id = VALUES(google_id);
+  (1, 'Administrador Principal', 'admin@tienda.com', '$2b$10$j/3VheMHkQWAsMVI/30Ka.CIF1EPoKJyUVJ8b056GHyN9Kz3Vby82', 1, NULL),
+  (2, 'Cliente Demo', 'cliente@tienda.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL),
+  (3, 'Carlos Ruiz', 'carlos@cliente.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL),
+  (4, 'Ana Lopez', 'ana@cliente.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL)
+ON CONFLICT (id_usuario) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  correo = EXCLUDED.correo,
+  password = EXCLUDED.password,
+  id_rol = EXCLUDED.id_rol,
+  google_id = EXCLUDED.google_id;
 
 INSERT INTO clientes (id_cliente, nombre, correo, telefono, id_usuario)
 VALUES
   (1, 'Cliente Demo', 'cliente@tienda.com', '555-1001', 2),
   (2, 'Carlos Ruiz', 'carlos@cliente.com', '555-1002', 3),
   (3, 'Ana Lopez', 'ana@cliente.com', '555-1003', 4)
-ON DUPLICATE KEY UPDATE
-  nombre = VALUES(nombre),
-  correo = VALUES(correo),
-  telefono = VALUES(telefono),
-  id_usuario = VALUES(id_usuario);
+ON CONFLICT (id_cliente) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  correo = EXCLUDED.correo,
+  telefono = EXCLUDED.telefono,
+  id_usuario = EXCLUDED.id_usuario;
 
 INSERT INTO productos (
   id_producto, nombre, descripcion, precio, stock, imagen, id_categoria, id_proveedor, id_marca
@@ -223,32 +210,32 @@ VALUES
   (18, 'Libreta Snoopy', 'Libreta rayada con portada de Snoopy, ideal para escuela u oficina.', 44.90, 55, '/images/productos/libreta-snoopy.jpg', 10, 2, 2),
   (19, 'Mousepad Snoopy', 'Mousepad suave con base antideslizante y arte de Snoopy.', 49.90, 48, '/images/productos/mousepad-snoopy.jpg', 11, 2, 2),
   (20, 'Figura Snoopy', 'Figura coleccionable de Snoopy para escritorio o vitrina.', 149.90, 5, '/images/productos/figura-snoopy.jpg', 12, 2, 2)
-ON DUPLICATE KEY UPDATE
-  nombre = VALUES(nombre),
-  descripcion = VALUES(descripcion),
-  precio = VALUES(precio),
-  stock = VALUES(stock),
-  imagen = VALUES(imagen),
-  id_categoria = VALUES(id_categoria),
-  id_proveedor = VALUES(id_proveedor),
-  id_marca = VALUES(id_marca);
+ON CONFLICT (id_producto) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  descripcion = EXCLUDED.descripcion,
+  precio = EXCLUDED.precio,
+  stock = EXCLUDED.stock,
+  imagen = EXCLUDED.imagen,
+  id_categoria = EXCLUDED.id_categoria,
+  id_proveedor = EXCLUDED.id_proveedor,
+  id_marca = EXCLUDED.id_marca;
 
 INSERT INTO ventas (id_venta, id_cliente, id_usuario, id_metodo_pago, fecha, total)
 VALUES
-  (1, 1, 1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY), 389.70),
-  (2, 2, 1, 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 474.70),
-  (3, 3, 1, 3, DATE_SUB(NOW(), INTERVAL 5 DAY), 249.80),
-  (4, 1, 1, 2, DATE_SUB(NOW(), INTERVAL 35 DAY), 599.70),
-  (5, 2, 1, 1, DATE_SUB(NOW(), INTERVAL 65 DAY), 134.80),
-  (6, 3, 1, 3, DATE_SUB(NOW(), INTERVAL 95 DAY), 119.80),
-  (7, 1, 1, 2, DATE_SUB(NOW(), INTERVAL 125 DAY), 579.70),
-  (8, 2, 1, 1, DATE_SUB(NOW(), INTERVAL 155 DAY), 759.60)
-ON DUPLICATE KEY UPDATE
-  id_cliente = VALUES(id_cliente),
-  id_usuario = VALUES(id_usuario),
-  id_metodo_pago = VALUES(id_metodo_pago),
-  fecha = VALUES(fecha),
-  total = VALUES(total);
+  (1, 1, 1, 2, NOW() - INTERVAL '2 days', 389.70),
+  (2, 2, 1, 1, NOW() - INTERVAL '1 day', 474.70),
+  (3, 3, 1, 3, NOW() - INTERVAL '5 days', 249.80),
+  (4, 1, 1, 2, NOW() - INTERVAL '35 days', 599.70),
+  (5, 2, 1, 1, NOW() - INTERVAL '65 days', 134.80),
+  (6, 3, 1, 3, NOW() - INTERVAL '95 days', 119.80),
+  (7, 1, 1, 2, NOW() - INTERVAL '125 days', 579.70),
+  (8, 2, 1, 1, NOW() - INTERVAL '155 days', 759.60)
+ON CONFLICT (id_venta) DO UPDATE SET
+  id_cliente = EXCLUDED.id_cliente,
+  id_usuario = EXCLUDED.id_usuario,
+  id_metodo_pago = EXCLUDED.id_metodo_pago,
+  fecha = EXCLUDED.fecha,
+  total = EXCLUDED.total;
 
 INSERT INTO detalle_venta (id_detalle, id_venta, id_producto, cantidad, precio_unitario, subtotal)
 VALUES
@@ -267,12 +254,23 @@ VALUES
   (13, 7, 8, 1, 199.90, 199.90),
   (14, 8, 6, 1, 99.90, 99.90),
   (15, 8, 7, 3, 219.90, 659.70)
-ON DUPLICATE KEY UPDATE
-  id_venta = VALUES(id_venta),
-  id_producto = VALUES(id_producto),
-  cantidad = VALUES(cantidad),
-  precio_unitario = VALUES(precio_unitario),
-  subtotal = VALUES(subtotal);
+ON CONFLICT (id_detalle) DO UPDATE SET
+  id_venta = EXCLUDED.id_venta,
+  id_producto = EXCLUDED.id_producto,
+  cantidad = EXCLUDED.cantidad,
+  precio_unitario = EXCLUDED.precio_unitario,
+  subtotal = EXCLUDED.subtotal;
+
+SELECT setval(pg_get_serial_sequence('categorias', 'id_categoria'), COALESCE(MAX(id_categoria), 1), true) FROM categorias;
+SELECT setval(pg_get_serial_sequence('proveedores', 'id_proveedor'), COALESCE(MAX(id_proveedor), 1), true) FROM proveedores;
+SELECT setval(pg_get_serial_sequence('marcas', 'id_marca'), COALESCE(MAX(id_marca), 1), true) FROM marcas;
+SELECT setval(pg_get_serial_sequence('roles', 'id_rol'), COALESCE(MAX(id_rol), 1), true) FROM roles;
+SELECT setval(pg_get_serial_sequence('usuarios', 'id_usuario'), COALESCE(MAX(id_usuario), 1), true) FROM usuarios;
+SELECT setval(pg_get_serial_sequence('clientes', 'id_cliente'), COALESCE(MAX(id_cliente), 1), true) FROM clientes;
+SELECT setval(pg_get_serial_sequence('metodos_pago', 'id_metodo_pago'), COALESCE(MAX(id_metodo_pago), 1), true) FROM metodos_pago;
+SELECT setval(pg_get_serial_sequence('productos', 'id_producto'), COALESCE(MAX(id_producto), 1), true) FROM productos;
+SELECT setval(pg_get_serial_sequence('ventas', 'id_venta'), COALESCE(MAX(id_venta), 1), true) FROM ventas;
+SELECT setval(pg_get_serial_sequence('detalle_venta', 'id_detalle'), COALESCE(MAX(id_detalle), 1), true) FROM detalle_venta;
 
 DROP VIEW IF EXISTS vista_resumen_ventas;
 

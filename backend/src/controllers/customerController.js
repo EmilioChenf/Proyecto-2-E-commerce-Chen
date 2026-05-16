@@ -9,7 +9,7 @@ import { createHttpError } from '../utils/httpError.js';
 
 export async function listCustomers(_req, res, next) {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          c.id_cliente,
          c.nombre,
@@ -30,7 +30,7 @@ export async function listCustomers(_req, res, next) {
 }
 
 export async function createCustomer(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const {
@@ -40,10 +40,10 @@ export async function createCustomer(req, res, next) {
       password = 'Cliente123!',
     } = req.body;
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
-    const [existingRows] = await connection.query(
-      'SELECT id_usuario FROM usuarios WHERE correo = ? LIMIT 1',
+    const { rows: existingRows } = await connection.query(
+      'SELECT id_usuario FROM usuarios WHERE correo = $1 LIMIT 1',
       [correo],
     );
 
@@ -54,31 +54,33 @@ export async function createCustomer(req, res, next) {
     const clientRoleId = await getRoleId(connection, 'CLIENTE');
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const [userResult] = await connection.query(
+    const { rows: userRows } = await connection.query(
       `INSERT INTO usuarios (nombre, correo, password, id_rol, google_id)
-       VALUES (?, ?, ?, ?, NULL)`,
+       VALUES ($1, $2, $3, $4, NULL)
+       RETURNING id_usuario`,
       [nombre.trim(), correo.trim(), passwordHash, clientRoleId],
     );
+    const userId = userRows[0].id_usuario;
 
     const customerId = await upsertCustomerProfile(connection, {
-      userId: userResult.insertId,
+      userId,
       nombre: nombre.trim(),
       correo: correo.trim(),
       telefono: telefono.trim(),
     });
 
-    await connection.commit();
+    await connection.query('COMMIT');
 
     res.status(201).json({
       id_cliente: customerId,
-      id_usuario: userResult.insertId,
+      id_usuario: userId,
       nombre: nombre.trim(),
       correo: correo.trim(),
       telefono: telefono.trim(),
       total_compras: 0,
     });
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();
@@ -86,16 +88,16 @@ export async function createCustomer(req, res, next) {
 }
 
 export async function updateCustomer(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const { nombre, correo, telefono } = req.body;
     const { id } = req.params;
 
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
-    const [rows] = await connection.query(
-      'SELECT id_usuario FROM clientes WHERE id_cliente = ? LIMIT 1',
+    const { rows } = await connection.query(
+      'SELECT id_usuario FROM clientes WHERE id_cliente = $1 LIMIT 1',
       [id],
     );
 
@@ -107,19 +109,19 @@ export async function updateCustomer(req, res, next) {
 
     await connection.query(
       `UPDATE usuarios
-       SET nombre = ?, correo = ?
-       WHERE id_usuario = ?`,
+       SET nombre = $1, correo = $2
+       WHERE id_usuario = $3`,
       [nombre.trim(), correo.trim(), userId],
     );
 
     await connection.query(
       `UPDATE clientes
-       SET nombre = ?, correo = ?, telefono = ?
-       WHERE id_cliente = ?`,
+       SET nombre = $1, correo = $2, telefono = $3
+       WHERE id_cliente = $4`,
       [nombre.trim(), correo.trim(), telefono.trim(), id],
     );
 
-    await connection.commit();
+    await connection.query('COMMIT');
 
     res.json({
       id_cliente: Number(id),
@@ -129,7 +131,7 @@ export async function updateCustomer(req, res, next) {
       telefono: telefono.trim(),
     });
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();
@@ -137,14 +139,14 @@ export async function updateCustomer(req, res, next) {
 }
 
 export async function deleteCustomer(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const { id } = req.params;
-    await connection.beginTransaction();
+    await connection.query('BEGIN');
 
-    const [rows] = await connection.query(
-      'SELECT id_usuario FROM clientes WHERE id_cliente = ? LIMIT 1',
+    const { rows } = await connection.query(
+      'SELECT id_usuario FROM clientes WHERE id_cliente = $1 LIMIT 1',
       [id],
     );
 
@@ -154,13 +156,13 @@ export async function deleteCustomer(req, res, next) {
 
     const userId = rows[0].id_usuario;
 
-    await connection.query('DELETE FROM clientes WHERE id_cliente = ?', [id]);
-    await connection.query('DELETE FROM usuarios WHERE id_usuario = ?', [userId]);
+    await connection.query('DELETE FROM clientes WHERE id_cliente = $1', [id]);
+    await connection.query('DELETE FROM usuarios WHERE id_usuario = $1', [userId]);
 
-    await connection.commit();
+    await connection.query('COMMIT');
     res.status(204).send();
   } catch (error) {
-    await connection.rollback();
+    await connection.query('ROLLBACK');
     next(error);
   } finally {
     connection.release();

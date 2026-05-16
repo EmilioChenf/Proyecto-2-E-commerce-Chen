@@ -1,18 +1,31 @@
-import mysql from 'mysql2/promise';
+import pg from 'pg';
 
 import { env } from '../config/env.js';
 
-export const pool = mysql.createPool({
-  host: env.db.host,
-  port: env.db.port,
-  database: env.db.database,
-  user: env.db.user,
-  password: env.db.password,
-  connectionLimit: env.db.connectionLimit,
-  waitForConnections: true,
-  queueLimit: 0,
-  decimalNumbers: true,
-});
+const { Pool } = pg;
+
+pg.types.setTypeParser(20, Number);
+pg.types.setTypeParser(1700, Number);
+
+const poolConfig = env.db.databaseUrl
+  ? {
+      connectionString: env.db.databaseUrl,
+      max: env.db.connectionLimit,
+      ssl:
+        env.nodeEnv === 'production'
+          ? { rejectUnauthorized: false }
+          : undefined,
+    }
+  : {
+      host: env.db.host,
+      port: env.db.port,
+      database: env.db.database,
+      user: env.db.user,
+      password: env.db.password,
+      max: env.db.connectionLimit,
+    };
+
+export const pool = new Pool(poolConfig);
 
 export async function waitForDatabase({
   retries = 40,
@@ -27,7 +40,7 @@ export async function waitForDatabase({
     } catch (error) {
       lastError = error;
       console.log(
-        `[db] Esperando conexion con MySQL (${attempt}/${retries})...`,
+        `[db] Esperando conexion con PostgreSQL (${attempt}/${retries})...`,
       );
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }

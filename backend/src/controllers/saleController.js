@@ -6,10 +6,10 @@ import {
 import { createHttpError } from '../utils/httpError.js';
 
 async function getSaleOwnership(executor, saleId) {
-  const [rows] = await executor.query(
+  const { rows } = await executor.query(
     `SELECT v.id_venta, v.id_cliente, v.id_usuario
      FROM ventas v
-     WHERE v.id_venta = ?
+     WHERE v.id_venta = $1
      LIMIT 1`,
     [saleId],
   );
@@ -24,14 +24,14 @@ export async function listSales(req, res, next) {
 
     const values = [];
     const whereClause = isClientScope
-      ? 'WHERE c.id_usuario = ?'
+      ? 'WHERE c.id_usuario = $1'
       : '';
 
     if (isClientScope) {
       values.push(req.user.id_usuario);
     }
 
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          v.id_venta,
          v.fecha,
@@ -67,8 +67,8 @@ export async function getSaleById(req, res, next) {
     }
 
     if (req.user.rol === 'CLIENTE') {
-      const [ownerRows] = await pool.query(
-        'SELECT id_cliente FROM clientes WHERE id_usuario = ? LIMIT 1',
+      const { rows: ownerRows } = await pool.query(
+        'SELECT id_cliente FROM clientes WHERE id_usuario = $1 LIMIT 1',
         [req.user.id_usuario],
       );
 
@@ -77,7 +77,7 @@ export async function getSaleById(req, res, next) {
       }
     }
 
-    const [headers] = await pool.query(
+    const { rows: headers } = await pool.query(
       `SELECT
          v.id_venta,
          v.fecha,
@@ -92,12 +92,12 @@ export async function getSaleById(req, res, next) {
        INNER JOIN clientes c ON c.id_cliente = v.id_cliente
        INNER JOIN usuarios u ON u.id_usuario = v.id_usuario
        INNER JOIN metodos_pago mp ON mp.id_metodo_pago = v.id_metodo_pago
-       WHERE v.id_venta = ?
+       WHERE v.id_venta = $1
        LIMIT 1`,
       [req.params.id],
     );
 
-    const [items] = await pool.query(
+    const { rows: items } = await pool.query(
       `SELECT
          dv.id_detalle,
          dv.id_producto,
@@ -107,7 +107,7 @@ export async function getSaleById(req, res, next) {
          dv.subtotal
        FROM detalle_venta dv
        INNER JOIN productos p ON p.id_producto = dv.id_producto
-       WHERE dv.id_venta = ?
+       WHERE dv.id_venta = $1
        ORDER BY dv.id_detalle ASC`,
       [req.params.id],
     );
@@ -122,7 +122,7 @@ export async function getSaleById(req, res, next) {
 }
 
 export async function createSale(req, res, next) {
-  const connection = await pool.getConnection();
+  const connection = await pool.connect();
 
   try {
     const { items, id_metodo_pago, customer = {}, id_cliente } = req.body;
@@ -145,8 +145,8 @@ export async function createSale(req, res, next) {
         telefono: customer.telefono ?? '',
       });
     } else {
-      const [customerRows] = await connection.query(
-        'SELECT id_cliente FROM clientes WHERE id_cliente = ? LIMIT 1',
+      const { rows: customerRows } = await connection.query(
+        'SELECT id_cliente FROM clientes WHERE id_cliente = $1 LIMIT 1',
         [customerId],
       );
 
@@ -166,10 +166,10 @@ export async function createSale(req, res, next) {
         throw createHttpError(422, 'Cada producto debe tener una cantidad valida.');
       }
 
-      const [productRows] = await connection.query(
+      const { rows: productRows } = await connection.query(
         `SELECT id_producto, nombre, precio, stock
          FROM productos
-         WHERE id_producto = ?
+         WHERE id_producto = $1
          LIMIT 1
          FOR UPDATE`,
         [productId],
@@ -199,19 +199,21 @@ export async function createSale(req, res, next) {
       });
     }
 
-    const [saleResult] = await connection.query(
+    const { rows: saleRows } = await connection.query(
       `INSERT INTO ventas (id_cliente, id_usuario, id_metodo_pago, fecha, total)
-       VALUES (?, ?, ?, NOW(), ?)`,
+       VALUES ($1, $2, $3, NOW(), $4)
+       RETURNING id_venta`,
       [customerId, req.user.id_usuario, paymentMethodId, total],
     );
+    const saleId = saleRows[0].id_venta;
 
     for (const item of normalizedItems) {
       await connection.query(
         `INSERT INTO detalle_venta
          (id_venta, id_producto, cantidad, precio_unitario, subtotal)
-         VALUES (?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5)`,
         [
-          saleResult.insertId,
+          saleId,
           item.id_producto,
           item.cantidad,
           item.precio_unitario,
@@ -221,14 +223,14 @@ export async function createSale(req, res, next) {
 
       await connection.query(
         `UPDATE productos
-         SET stock = stock - ?
-         WHERE id_producto = ?`,
+         SET stock = stock - $1
+         WHERE id_producto = $2`,
         [item.cantidad, item.id_producto],
       );
     }
 
     await connection.query('COMMIT');
-    req.params.id = String(saleResult.insertId);
+    req.params.id = String(saleId);
     return getSaleById(req, res, next);
   } catch (error) {
     await connection.query('ROLLBACK');
