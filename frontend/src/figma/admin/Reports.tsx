@@ -34,10 +34,18 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
 export function Reports() {
   const [data, setData] = useState<OverviewReport | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchOverviewReport().then(setData);
+    fetchOverviewReport()
+      .then((report) => {
+        setData(report);
+        setLoadError(null);
+      })
+      .catch(() => {
+        setLoadError('No se pudieron cargar los reportes. Verifica tu sesion de administrador.');
+      });
   }, []);
 
   const summary = data?.summary ?? {
@@ -97,6 +105,12 @@ export function Reports() {
       {downloadError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {downloadError}
+        </div>
+      )}
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
         </div>
       )}
 

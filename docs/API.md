@@ -111,6 +111,12 @@ Requieren rol `ADMIN`.
 | GET | `/api/reports/top-products/pdf` | Descarga PDF de productos mas vendidos. |
 | GET | `/api/reports/low-stock/csv` | Descarga CSV de stock bajo. |
 | GET | `/api/reports/low-stock/pdf` | Descarga PDF de stock bajo. |
+| GET | `/api/reports/sales-by-payment/csv` | Descarga CSV de ventas por metodo de pago. |
+| GET | `/api/reports/sales-by-payment/pdf` | Descarga PDF de ventas por metodo de pago. |
+| GET | `/api/reports/sales-by-date/csv` | Descarga CSV de ventas por fecha. |
+| GET | `/api/reports/sales-by-date/pdf` | Descarga PDF de ventas por fecha. |
+| GET | `/api/reports/top-customers/csv` | Descarga CSV de clientes con mas compras. |
+| GET | `/api/reports/top-customers/pdf` | Descarga PDF de clientes con mas compras. |
 
 ## Codigos HTTP esperados
 
