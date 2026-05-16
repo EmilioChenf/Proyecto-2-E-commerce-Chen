@@ -29,6 +29,7 @@ interface StoreContextValue {
   paymentMethods: PaymentMethod[];
   orders: SaleListItem[];
   loading: boolean;
+  error: string | null;
   refreshCatalog: () => Promise<void>;
   refreshOrders: () => Promise<void>;
   checkout: (payload: CheckoutPayload) => Promise<SaleDetail>;
@@ -44,8 +45,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [orders, setOrders] = useState<SaleListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refreshCatalog = useCallback(async () => {
+    setError(null);
+
     const [nextProducts, nextCategories, nextBrands, nextPaymentMethods] =
       await Promise.all([
         fetchProducts(),
@@ -85,6 +89,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       try {
         await Promise.all([refreshCatalog(), refreshOrders()]);
+      } catch {
+        setError('No se pudieron cargar los productos. Intenta recargar la pagina.');
       } finally {
         setLoading(false);
       }
@@ -101,6 +107,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       paymentMethods,
       orders,
       loading,
+      error,
       refreshCatalog,
       refreshOrders,
       checkout,
@@ -109,6 +116,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       brands,
       categories,
       checkout,
+      error,
       loading,
       orders,
       paymentMethods,

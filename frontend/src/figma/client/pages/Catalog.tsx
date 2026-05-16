@@ -10,7 +10,7 @@ import { useImageFallback } from '@/utils/images';
 export function Catalog() {
   const [searchParams] = useSearchParams();
   const { addToCart } = useCart();
-  const { products, categories, brands } = useStore();
+  const { products, categories, brands, loading, error, refreshCatalog } = useStore();
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     searchParams.get('category') ? [searchParams.get('category')!] : [],
@@ -240,7 +240,21 @@ export function Catalog() {
           </aside>
 
           <div className="flex-1">
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                <p className="text-gray-500 text-lg">Cargando productos...</p>
+              </div>
+            ) : error ? (
+              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                <p className="text-red-600 text-lg mb-4">{error}</p>
+                <button
+                  onClick={() => refreshCatalog()}
+                  className="px-5 py-2 rounded-full font-bold brand-primary-gradient text-[#10231f]"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
                 <p className="text-gray-500 text-lg">
                   No se encontraron productos relacionados.

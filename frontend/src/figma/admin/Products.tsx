@@ -70,19 +70,32 @@ export function Products() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
-    const [productRows, categoryRows, brandRows, supplierRows] = await Promise.all([
-      fetchProducts(),
-      fetchCategories(),
-      fetchBrands(),
-      fetchSuppliers(),
-    ]);
+    setIsLoading(true);
+    setLoadError(null);
 
-    setProducts(productRows.map(mapProduct));
-    setCategories(categoryRows.map((item) => item.nombre));
-    setBrands(brandRows.map((item) => item.nombre));
-    setSuppliers(supplierRows.map((item) => item.nombre));
+    try {
+      const [productRows, categoryRows, brandRows, supplierRows] = await Promise.all([
+        fetchProducts(),
+        fetchCategories(),
+        fetchBrands(),
+        fetchSuppliers(),
+      ]);
+
+      setProducts(productRows.map(mapProduct));
+      setCategories(categoryRows.map((item) => item.nombre));
+      setBrands(brandRows.map((item) => item.nombre));
+      setSuppliers(supplierRows.map((item) => item.nombre));
+    } catch (error) {
+      const message = getErrorMessage(error, 'No se pudieron cargar los productos.');
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -291,7 +304,24 @@ export function Products() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
+                {isLoading && (
+                  <tr>
+                    <td colSpan={8} className="py-8 px-4 text-center text-sm text-gray-500">
+                      Cargando productos...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && loadError && (
+                  <tr>
+                    <td colSpan={8} className="py-8 px-4 text-center text-sm text-red-600">
+                      <div className="space-y-3">
+                        <p>{loadError}</p>
+                        <Button variant="outline" onClick={loadData}>Reintentar</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !loadError && filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 text-sm text-gray-600">{product.id}</td>
                     <td className="py-3 px-4 text-sm font-medium text-gray-900">{product.name}</td>
@@ -318,6 +348,13 @@ export function Products() {
                     </td>
                   </tr>
                 ))}
+                {!isLoading && !loadError && filteredProducts.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-8 px-4 text-center text-sm text-gray-500">
+                      No hay productos para mostrar.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

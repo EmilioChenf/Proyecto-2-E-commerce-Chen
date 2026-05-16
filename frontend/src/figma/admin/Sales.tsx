@@ -61,19 +61,32 @@ export function Sales() {
   const [draftProductId, setDraftProductId] = useState('');
   const [draftQuantity, setDraftQuantity] = useState(1);
   const [draftItems, setDraftItems] = useState<SaleItemDraft[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = async () => {
-    const [saleRows, customerRows, paymentRows, productRows] = await Promise.all([
-      fetchSales(),
-      fetchCustomers(),
-      fetchPaymentMethods(),
-      fetchProducts(),
-    ]);
+    setIsLoading(true);
+    setLoadError(null);
 
-    setSales(saleRows.map(mapSale));
-    setCustomers(customerRows);
-    setPaymentMethods(paymentRows);
-    setProducts(productRows);
+    try {
+      const [saleRows, customerRows, paymentRows, productRows] = await Promise.all([
+        fetchSales(),
+        fetchCustomers(),
+        fetchPaymentMethods(),
+        fetchProducts(),
+      ]);
+
+      setSales(saleRows.map(mapSale));
+      setCustomers(customerRows);
+      setPaymentMethods(paymentRows);
+      setProducts(productRows);
+    } catch (error) {
+      const message = getErrorMessage(error, 'No se pudieron cargar las ventas.');
+      setLoadError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -209,7 +222,24 @@ export function Sales() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSales.map((sale) => (
+                {isLoading && (
+                  <tr>
+                    <td colSpan={7} className="py-8 px-4 text-center text-sm text-gray-500">
+                      Cargando ventas...
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && loadError && (
+                  <tr>
+                    <td colSpan={7} className="py-8 px-4 text-center text-sm text-red-600">
+                      <div className="space-y-3">
+                        <p>{loadError}</p>
+                        <Button variant="outline" onClick={loadData}>Reintentar</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {!isLoading && !loadError && filteredSales.map((sale) => (
                   <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 text-sm font-medium text-blue-600">{sale.id}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{sale.date}</td>
@@ -233,6 +263,13 @@ export function Sales() {
                     </td>
                   </tr>
                 ))}
+                {!isLoading && !loadError && filteredSales.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-8 px-4 text-center text-sm text-gray-500">
+                      No hay ventas para mostrar.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
