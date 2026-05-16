@@ -128,7 +128,7 @@ export async function createSale(req, res, next) {
     const { items, id_metodo_pago, customer = {}, id_cliente } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
-      throw createHttpError(422, 'Debes agregar al menos un producto a la venta.');
+      throw createHttpError(400, 'Debes agregar al menos un producto a la venta.');
     }
 
     await connection.query('BEGIN');
@@ -151,7 +151,7 @@ export async function createSale(req, res, next) {
       );
 
       if (!customerRows.length) {
-        throw createHttpError(422, 'Debes seleccionar un cliente valido para registrar la venta.');
+        throw createHttpError(400, 'Debes seleccionar un cliente valido para registrar la venta.');
       }
     }
 
@@ -163,7 +163,7 @@ export async function createSale(req, res, next) {
       const productId = Number(item.id_producto);
 
       if (!Number.isFinite(quantity) || quantity <= 0) {
-        throw createHttpError(422, 'Cada producto debe tener una cantidad valida.');
+        throw createHttpError(400, 'Cada producto debe tener una cantidad valida.');
       }
 
       const { rows: productRows } = await connection.query(
@@ -230,8 +230,44 @@ export async function createSale(req, res, next) {
     }
 
     await connection.query('COMMIT');
-    req.params.id = String(saleId);
-    return getSaleById(req, res, next);
+    const { rows: headers } = await pool.query(
+      `SELECT
+         v.id_venta,
+         v.fecha,
+         v.total,
+         c.id_cliente,
+         c.nombre AS cliente,
+         c.correo,
+         c.telefono,
+         u.nombre AS usuario,
+         mp.nombre AS metodo_pago
+       FROM ventas v
+       INNER JOIN clientes c ON c.id_cliente = v.id_cliente
+       INNER JOIN usuarios u ON u.id_usuario = v.id_usuario
+       INNER JOIN metodos_pago mp ON mp.id_metodo_pago = v.id_metodo_pago
+       WHERE v.id_venta = $1
+       LIMIT 1`,
+      [saleId],
+    );
+    const { rows: saleItems } = await pool.query(
+      `SELECT
+         dv.id_detalle,
+         dv.id_producto,
+         p.nombre AS producto,
+         dv.cantidad,
+         dv.precio_unitario,
+         dv.subtotal
+       FROM detalle_venta dv
+       INNER JOIN productos p ON p.id_producto = dv.id_producto
+       WHERE dv.id_venta = $1
+       ORDER BY dv.id_detalle ASC`,
+      [saleId],
+    );
+
+    return res.status(201).json({
+      ...headers[0],
+      items: saleItems,
+    });
   } catch (error) {
     await connection.query('ROLLBACK');
     next(error);

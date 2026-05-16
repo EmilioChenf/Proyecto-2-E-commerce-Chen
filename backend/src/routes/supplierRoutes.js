@@ -4,6 +4,7 @@ import { body, param } from 'express-validator';
 import {
   createSupplier,
   deleteSupplier,
+  getSupplierById,
   listSuppliers,
   updateSupplier,
 } from '../controllers/catalogController.js';
@@ -14,6 +15,11 @@ import { validateRequest } from '../middlewares/validateRequest.js';
 const router = Router();
 
 router.get('/', listSuppliers);
+router.get(
+  '/:id',
+  [param('id').isInt().withMessage('ID invalido.'), validateRequest],
+  getSupplierById,
+);
 
 router.post(
   '/',

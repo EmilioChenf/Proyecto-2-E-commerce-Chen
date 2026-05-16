@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   dashboard,
+  dashboardSummary,
   exportLowStockCsv,
   exportLowStockPdf,
   exportRecentSalesCsv,
@@ -15,6 +16,8 @@ import {
   exportTopProductsCsv,
   exportTopProductsPdf,
   overview,
+  salesTotal,
+  stockSummary,
 } from '../controllers/reportController.js';
 import { authenticate } from '../middlewares/auth.js';
 import { authorize } from '../middlewares/authorize.js';
@@ -24,7 +27,10 @@ const router = Router();
 router.use(authenticate, authorize('ADMIN'));
 
 router.get('/dashboard', dashboard);
+router.get('/dashboard-summary', dashboardSummary);
 router.get('/overview', overview);
+router.get('/sales-total', salesTotal);
+router.get('/stock-summary', stockSummary);
 router.get('/recent-sales.csv', exportRecentSalesCsv);
 router.get('/recent-sales/csv', exportRecentSalesCsv);
 router.get('/recent-sales/pdf', exportRecentSalesPdf);

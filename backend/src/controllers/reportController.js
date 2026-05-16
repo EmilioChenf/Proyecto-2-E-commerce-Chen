@@ -2,6 +2,56 @@ import { pool } from '../db/pool.js';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+export async function dashboardSummary(_req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM productos) AS total_productos,
+         (SELECT COUNT(*) FROM productos WHERE stock < 10) AS stock_bajo,
+         (SELECT COUNT(*) FROM ventas) AS total_ventas,
+         (SELECT COALESCE(SUM(total), 0) FROM ventas) AS ingresos_totales,
+         (SELECT COUNT(*) FROM clientes) AS total_clientes`,
+    );
+
+    res.json(rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function salesTotal(_req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         COUNT(*) AS total_ventas,
+         COALESCE(SUM(total), 0) AS ingresos_totales,
+         COALESCE(AVG(total), 0) AS ticket_promedio
+       FROM ventas`,
+    );
+
+    res.json(rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function stockSummary(_req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         COUNT(*) AS total_productos,
+         COALESCE(SUM(stock), 0) AS unidades_disponibles,
+         COUNT(*) FILTER (WHERE stock = 0) AS productos_sin_stock,
+         COUNT(*) FILTER (WHERE stock < 10) AS productos_stock_bajo
+       FROM productos`,
+    );
+
+    res.json(rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function dashboard(req, res, next) {
   try {
     const { rows: summaryRows } = await pool.query(

@@ -40,7 +40,7 @@ const upload = multer({
   },
   fileFilter: (_req, file, callback) => {
     if (!file.mimetype.startsWith('image/')) {
-      return callback(createHttpError(422, 'El archivo debe ser una imagen.'));
+      return callback(createHttpError(400, 'El archivo debe ser una imagen.'));
     }
 
     return callback(null, true);
@@ -54,7 +54,7 @@ router.use(authenticate, authorize('ADMIN'));
 router.post('/product-image', upload.single('image'), (req, res, next) => {
   try {
     if (!req.file) {
-      throw createHttpError(422, 'Debes seleccionar una imagen.');
+      throw createHttpError(400, 'Debes seleccionar una imagen.');
     }
 
     res.status(201).json({

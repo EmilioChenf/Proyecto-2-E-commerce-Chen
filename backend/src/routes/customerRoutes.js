@@ -4,6 +4,7 @@ import { body, param } from 'express-validator';
 import {
   createCustomer,
   deleteCustomer,
+  getCustomerById,
   listCustomers,
   updateCustomer,
 } from '../controllers/customerController.js';
@@ -16,6 +17,11 @@ const router = Router();
 router.use(authenticate, authorize('ADMIN'));
 
 router.get('/', listCustomers);
+router.get(
+  '/:id',
+  [param('id').isInt().withMessage('ID invalido.'), validateRequest],
+  getCustomerById,
+);
 
 router.post(
   '/',

@@ -70,6 +70,26 @@ export async function listCategories(_req, res, next) {
   }
 }
 
+export async function getCategoryById(req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id_categoria, nombre FROM categorias WHERE id_categoria = $1 LIMIT 1',
+      [req.params.id],
+    );
+
+    if (!rows.length) {
+      throw createHttpError(404, 'La categoria no existe.');
+    }
+
+    res.json({
+      ...rows[0],
+      descripcion: getCategoryDescription(rows[0].nombre),
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createCategory(req, res, next) {
   try {
     const { nombre } = req.body;
@@ -123,7 +143,10 @@ export async function deleteCategory(req, res, next) {
       throw createHttpError(404, 'La categoria no existe.');
     }
 
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Categoria eliminada correctamente.',
+    });
   } catch (error) {
     next(error);
   }
@@ -137,6 +160,26 @@ export async function listSuppliers(_req, res, next) {
        ORDER BY nombre ASC`,
     );
     res.json(rows);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSupplierById(req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id_proveedor, nombre, correo, telefono
+       FROM proveedores
+       WHERE id_proveedor = $1
+       LIMIT 1`,
+      [req.params.id],
+    );
+
+    if (!rows.length) {
+      throw createHttpError(404, 'El proveedor no existe.');
+    }
+
+    res.json(rows[0]);
   } catch (error) {
     next(error);
   }
@@ -201,7 +244,10 @@ export async function deleteSupplier(req, res, next) {
       throw createHttpError(404, 'El proveedor no existe.');
     }
 
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Proveedor eliminado correctamente.',
+    });
   } catch (error) {
     next(error);
   }
@@ -291,7 +337,10 @@ export async function deletePaymentMethod(req, res, next) {
       throw createHttpError(404, 'El metodo de pago no existe.');
     }
 
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Metodo de pago eliminado correctamente.',
+    });
   } catch (error) {
     next(error);
   }
@@ -457,7 +506,30 @@ export async function createProduct(req, res, next) {
     await connection.query('COMMIT');
 
     req.params.id = String(rows[0].id_producto);
-    return getProductById(req, res, next);
+    const { rows: productRows } = await pool.query(
+      `SELECT
+         p.id_producto,
+         p.nombre,
+         p.descripcion,
+         p.precio,
+         p.stock,
+         p.imagen,
+         c.id_categoria,
+         c.nombre AS categoria,
+         pr.id_proveedor,
+         pr.nombre AS proveedor,
+         m.id_marca,
+         m.nombre AS marca
+       FROM productos p
+       INNER JOIN categorias c ON c.id_categoria = p.id_categoria
+       INNER JOIN proveedores pr ON pr.id_proveedor = p.id_proveedor
+       INNER JOIN marcas m ON m.id_marca = p.id_marca
+       WHERE p.id_producto = $1
+       LIMIT 1`,
+      [rows[0].id_producto],
+    );
+    const presentationSets = await getProductPresentationSets();
+    return res.status(201).json(mapProductRow(productRows[0], presentationSets));
   } catch (error) {
     await connection.query('ROLLBACK');
     next(error);
@@ -533,7 +605,10 @@ export async function deleteProduct(req, res, next) {
       throw createHttpError(404, 'El producto no existe.');
     }
 
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Producto eliminado correctamente.',
+    });
   } catch (error) {
     next(error);
   }

@@ -7,7 +7,7 @@ export function validateRequest(req, _res, next) {
 
   if (!result.isEmpty()) {
     return next(
-      createHttpError(422, 'Los datos enviados no son validos.', result.array()),
+      createHttpError(400, 'Los datos enviados no son validos.', result.array()),
     );
   }
 

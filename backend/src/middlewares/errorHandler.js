@@ -8,27 +8,28 @@ export function errorHandler(error, _req, res, _next) {
   let status = error.status ?? 500;
   let message = error.message ?? 'Error interno del servidor.';
 
-  if (error.code === 'ER_DUP_ENTRY') {
-    status = 409;
+  if (status === 422) {
+    status = 400;
+  }
+
+  if (error.code === '23505') {
+    status = 400;
     message = 'El registro ya existe y no puede duplicarse.';
   }
 
-  if (
-    error.code === 'ER_ROW_IS_REFERENCED_2' ||
-    error.code === 'ER_ROW_IS_REFERENCED'
-  ) {
-    status = 409;
+  if (error.code === '23503') {
+    status = 400;
     message =
       'No se puede eliminar este registro porque tiene informacion relacionada.';
   }
 
-  if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+  if (error.code === '23502' || error.code === '23514' || error.code === '22P02') {
     status = 400;
-    message =
-      'No se pudo completar la operacion porque una referencia relacionada no existe.';
+    message = 'Los datos enviados no son validos.';
   }
 
   const payload = {
+    error: true,
     message,
   };
 

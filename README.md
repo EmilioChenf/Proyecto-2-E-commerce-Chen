@@ -45,3 +45,7 @@ DATABASE_URL=postgresql://usuario:password@host:5432/base
 ```
 
 Si `DATABASE_URL` existe, el backend la usa sobre las variables `DB_*`.
+
+## API REST
+
+La documentacion de endpoints REST esta en `docs/API.md`.

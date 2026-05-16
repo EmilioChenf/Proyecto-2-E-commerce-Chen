@@ -29,6 +29,34 @@ export async function listCustomers(_req, res, next) {
   }
 }
 
+export async function getCustomerById(req, res, next) {
+  try {
+    const { rows } = await pool.query(
+      `SELECT
+         c.id_cliente,
+         c.nombre,
+         c.correo,
+         c.telefono,
+         c.id_usuario,
+         COALESCE(COUNT(v.id_venta), 0) AS total_compras
+       FROM clientes c
+       LEFT JOIN ventas v ON v.id_cliente = c.id_cliente
+       WHERE c.id_cliente = $1
+       GROUP BY c.id_cliente, c.nombre, c.correo, c.telefono, c.id_usuario
+       LIMIT 1`,
+      [req.params.id],
+    );
+
+    if (!rows.length) {
+      throw createHttpError(404, 'El cliente no existe.');
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createCustomer(req, res, next) {
   const connection = await pool.connect();
 
@@ -160,7 +188,10 @@ export async function deleteCustomer(req, res, next) {
     await connection.query('DELETE FROM usuarios WHERE id_usuario = $1', [userId]);
 
     await connection.query('COMMIT');
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Cliente eliminado correctamente.',
+    });
   } catch (error) {
     await connection.query('ROLLBACK');
     next(error);

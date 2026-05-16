@@ -160,7 +160,10 @@ export async function deleteUser(req, res, next) {
     }
 
     await connection.query('COMMIT');
-    res.status(204).send();
+    res.json({
+      success: true,
+      message: 'Usuario eliminado correctamente.',
+    });
   } catch (error) {
     await connection.query('ROLLBACK');
     next(error);

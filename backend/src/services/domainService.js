@@ -72,7 +72,7 @@ export async function upsertCustomerProfile(
 
 export async function resolveCategoryId(executor, value) {
   if (!value) {
-    throw createHttpError(422, 'Debes indicar una categoria.');
+    throw createHttpError(400, 'Debes indicar una categoria.');
   }
 
   const normalized = String(value).trim();
@@ -110,7 +110,7 @@ export async function resolveCategoryId(executor, value) {
 
 export async function resolveBrandId(executor, value) {
   if (!value) {
-    throw createHttpError(422, 'Debes indicar una marca.');
+    throw createHttpError(400, 'Debes indicar una marca.');
   }
 
   const normalized = String(value).trim();
@@ -148,7 +148,7 @@ export async function resolveBrandId(executor, value) {
 
 export async function resolveSupplierId(executor, value) {
   if (!value) {
-    throw createHttpError(422, 'Debes indicar un proveedor.');
+    throw createHttpError(400, 'Debes indicar un proveedor.');
   }
 
   const normalized = String(value).trim();
@@ -184,7 +184,7 @@ export async function resolveSupplierId(executor, value) {
 
 export async function resolvePaymentMethodId(executor, value) {
   if (!value) {
-    throw createHttpError(422, 'Debes indicar un metodo de pago.');
+    throw createHttpError(400, 'Debes indicar un metodo de pago.');
   }
 
   const normalized = String(value).trim();
