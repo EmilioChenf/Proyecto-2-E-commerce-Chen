@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, AlertCircle, X } from 'lucide-react';
 
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
-  const { getTotalItems } = useCart();
+  const { error, clearError, getTotalItems } = useCart();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -190,6 +190,26 @@ export function Header() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--primary-hover)]" />
               </div>
             </form>
+          </div>
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--color-secondary)] bg-white px-4 py-3 text-sm text-[#31534c]"
+          >
+            <span className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-[var(--primary-hover)]" />
+              {error}
+            </span>
+            <button
+              type="button"
+              onClick={clearError}
+              className="text-[#31534c] hover:text-[var(--primary-hover)]"
+              aria-label="Cerrar mensaje"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>

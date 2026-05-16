@@ -23,6 +23,7 @@ export function Checkout() {
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodName>('Tarjeta');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export function Checkout() {
     }
 
     const selectedMethod = paymentOptions[paymentMethod];
+    setSubmitError(null);
 
     try {
       setIsSubmitting(true);
@@ -110,6 +112,11 @@ export function Checkout() {
           items,
         },
       });
+    } catch (error: any) {
+      setSubmitError(
+        error?.response?.data?.message ??
+          'No fue posible completar el pedido. Intenta nuevamente.',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -342,6 +349,13 @@ export function Checkout() {
                 >
                   {isSubmitting ? 'Procesando...' : 'Confirmar Pedido'}
                 </button>
+
+                {submitError && (
+                  <p className="text-[#057f63] text-sm mt-3 flex items-center justify-center space-x-1">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{submitError}</span>
+                  </p>
+                )}
 
                 <p className="text-xs text-gray-500 text-center mt-4">
                   Al confirmar tu pedido aceptas nuestros terminos y condiciones

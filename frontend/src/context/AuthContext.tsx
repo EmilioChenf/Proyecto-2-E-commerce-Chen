@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -19,6 +20,7 @@ import type { User, UserRole } from '@/types';
 interface AuthContextValue {
   user: User | null;
   token: string | null;
+  role: UserRole | null;
   loading: boolean;
   isAuthenticated: boolean;
   login: (payload: { correo: string; password: string }) => Promise<User>;
@@ -34,6 +36,21 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function getStoredUser() {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser) as User;
+  } catch (_error) {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+}
+
 export function getPathForRole(role?: UserRole | null) {
   if (role === 'ADMIN') {
     return '/admin';
@@ -43,10 +60,7 @@ export function getPathForRole(role?: UserRole | null) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem(TOKEN_STORAGE_KEY),
   );
@@ -76,17 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession();
   }, [token]);
 
-  const persistSession = (nextToken: string, nextUser: User) => {
+  const persistSession = useCallback((nextToken: string, nextUser: User) => {
     localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
     setToken(nextToken);
     setUser(nextUser);
-  };
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       token,
+      role: user?.rol ?? null,
       loading,
       isAuthenticated: Boolean(user && token),
       async login(payload) {
@@ -111,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       },
     }),
-    [loading, token, user],
+    [loading, persistSession, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
