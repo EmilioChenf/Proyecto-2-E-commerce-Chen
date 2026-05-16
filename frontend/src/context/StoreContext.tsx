@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -44,7 +45,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<SaleListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshCatalog = async () => {
+  const refreshCatalog = useCallback(async () => {
     const [nextProducts, nextCategories, nextBrands, nextPaymentMethods] =
       await Promise.all([
         fetchProducts(),
@@ -57,9 +58,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCategories(nextCategories);
     setBrands(nextBrands);
     setPaymentMethods(nextPaymentMethods);
-  };
+  }, []);
 
-  const refreshOrders = async () => {
+  const refreshOrders = useCallback(async () => {
     if (!user || user.rol !== 'CLIENTE') {
       setOrders([]);
       return;
@@ -67,7 +68,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const nextOrders = await fetchSales('mine');
     setOrders(nextOrders);
-  };
+  }, [user]);
+
+  const checkout = useCallback(
+    async (payload: CheckoutPayload) => {
+      const sale = await createSale(payload);
+      await Promise.all([refreshCatalog(), refreshOrders()]);
+      return sale;
+    },
+    [refreshCatalog, refreshOrders],
+  );
 
   useEffect(() => {
     async function bootstrap() {
@@ -81,7 +91,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
 
     bootstrap();
-  }, [user?.id_usuario, user?.rol]);
+  }, [refreshCatalog, refreshOrders]);
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -93,13 +103,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       loading,
       refreshCatalog,
       refreshOrders,
-      async checkout(payload) {
-        const sale = await createSale(payload);
-        await Promise.all([refreshCatalog(), refreshOrders()]);
-        return sale;
-      },
+      checkout,
     }),
-    [brands, categories, loading, orders, paymentMethods, products],
+    [
+      brands,
+      categories,
+      checkout,
+      loading,
+      orders,
+      paymentMethods,
+      products,
+      refreshCatalog,
+      refreshOrders,
+    ],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

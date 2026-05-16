@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ShoppingCart, Eye, SlidersHorizontal } from 'lucide-react';
 
@@ -93,21 +93,28 @@ export function Catalog() {
     sortBy,
   ]);
 
-  const toggleCategory = (category: string) => {
+  const toggleCategory = useCallback((category: string) => {
     setSelectedCategories((current) =>
       current.includes(category)
         ? current.filter((value) => value !== category)
         : [...current, category],
     );
-  };
+  }, []);
 
-  const toggleBrand = (brand: string) => {
+  const toggleBrand = useCallback((brand: string) => {
     setSelectedBrands((current) =>
       current.includes(brand)
         ? current.filter((value) => value !== brand)
         : [...current, brand],
     );
-  };
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedBrands([]);
+    setPriceRange([0, 2000]);
+    setInStockOnly(false);
+  }, []);
 
   return (
     <div className="min-h-screen brand-page-bg">
@@ -225,12 +232,7 @@ export function Catalog() {
               </div>
 
               <button
-                onClick={() => {
-                  setSelectedCategories([]);
-                  setSelectedBrands([]);
-                  setPriceRange([0, 2000]);
-                  setInStockOnly(false);
-                }}
+                onClick={clearFilters}
                 className="w-full bg-[rgba(173,235,179,0.55)] text-[#31534c] py-2 rounded-lg hover:bg-[rgba(173,235,179,0.8)] transition font-medium"
               >
                 Limpiar Filtros
