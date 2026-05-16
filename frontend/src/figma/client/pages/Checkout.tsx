@@ -37,12 +37,6 @@ export function Checkout() {
     }
   }, [user]);
 
-  if (items.length === 0) {
-    return <Navigate to="/carrito" replace />;
-  }
-
-  const totalPrice = getTotalPrice();
-
   const paymentOptions = useMemo(
     () => ({
       Tarjeta: paymentMethods.find((method) => method.nombre === 'Tarjeta'),
@@ -51,6 +45,12 @@ export function Checkout() {
     }),
     [paymentMethods],
   );
+
+  if (items.length === 0) {
+    return <Navigate to="/carrito" replace />;
+  }
+
+  const totalPrice = getTotalPrice();
 
   const validateForm = () => {
     const nextErrors: Record<string, string> = {};

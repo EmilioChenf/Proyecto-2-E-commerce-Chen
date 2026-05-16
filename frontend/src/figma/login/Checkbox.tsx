@@ -5,7 +5,7 @@ interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, className = '', ...props }, ref) => {
+  ({ label, ...props }, ref) => {
     return (
       <label className="flex items-center cursor-pointer group">
         <input

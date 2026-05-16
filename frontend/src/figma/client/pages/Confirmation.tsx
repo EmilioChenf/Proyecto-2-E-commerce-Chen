@@ -9,7 +9,6 @@ export function Confirmation() {
   const location = useLocation();
   const order = location.state?.order;
   const customer = location.state?.customer;
-  const items = location.state?.items ?? [];
 
   useEffect(() => {
     if (order) {
@@ -21,18 +20,13 @@ export function Confirmation() {
     }
   }, [order]);
 
-  if (!order) {
-    return <Navigate to="/cliente" replace />;
-  }
-
-  const orderDate = new Date(order.fecha);
-  const estimatedDelivery = new Date(orderDate);
-  estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
-
   const orderItems = useMemo(
-    () =>
-      order.items.map((detail: any) => {
-        const cartItem = items.find(
+    () => {
+      const currentItems = location.state?.items ?? [];
+      const currentDetails = order?.items ?? [];
+
+      return currentDetails.map((detail: any) => {
+        const cartItem = currentItems.find(
           (item: any) => Number(item.product.id) === detail.id_producto,
         );
 
@@ -41,9 +35,18 @@ export function Confirmation() {
           product: cartItem?.product ?? null,
           quantity: cartItem?.quantity ?? detail.cantidad,
         };
-      }),
-    [items, order.items],
+      });
+    },
+    [location.state, order],
   );
+
+  if (!order) {
+    return <Navigate to="/cliente" replace />;
+  }
+
+  const orderDate = new Date(order.fecha);
+  const estimatedDelivery = new Date(orderDate);
+  estimatedDelivery.setDate(estimatedDelivery.getDate() + 5);
 
   return (
     <div className="min-h-screen brand-section-gradient">

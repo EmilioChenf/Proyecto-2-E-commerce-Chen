@@ -83,7 +83,6 @@ export function Catalog() {
 
     return filtered;
   }, [
-    brands,
     inStockOnly,
     priceRange,
     products,

@@ -21,7 +21,7 @@ export function authenticate(req, _res, next) {
     };
 
     next();
-  } catch (error) {
+  } catch (_error) {
     next(createHttpError(401, 'Sesion invalida o expirada.'));
   }
 }
