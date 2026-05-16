@@ -22,6 +22,11 @@ export function Header() {
     event.preventDefault();
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
   const totalItems = getTotalItems();
   const currentPath = `${location.pathname}${location.search}`;
   const navClass = (target: string) =>
@@ -102,7 +107,7 @@ export function Header() {
             </Link>
             <button
               type="button"
-              onClick={logout}
+              onClick={handleLogout}
               className="hidden lg:block text-sm text-[#31534c] hover:text-[var(--primary-hover)] transition"
             >
               Cerrar sesion
@@ -167,7 +172,7 @@ export function Header() {
                 className="text-left text-[#31534c] hover:text-[var(--primary-hover)] transition"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  logout();
+                  handleLogout();
                 }}
               >
                 Cerrar sesion

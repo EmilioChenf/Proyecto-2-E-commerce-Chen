@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '@/context/AuthContext';
 import { Categories } from '@/figma/admin/Categories';
@@ -15,10 +15,39 @@ import { TopBar } from '@/figma/admin/TopBar';
 import { Users } from '@/figma/admin/Users';
 import { Toaster } from '@/figma/admin/ui/sonner';
 
+const ADMIN_SECTION_PATHS: Record<string, string> = {
+  dashboard: '/admin',
+  products: '/admin/productos',
+  categories: '/admin/categorias',
+  suppliers: '/admin/proveedores',
+  customers: '/admin/clientes',
+  users: '/admin/usuarios',
+  sales: '/admin/ventas',
+  payments: '/admin/metodos-pago',
+  reports: '/admin/reportes',
+  settings: '/admin/configuracion',
+};
+
+const ADMIN_PATH_SECTIONS: Record<string, string> = Object.fromEntries(
+  Object.entries(ADMIN_SECTION_PATHS).map(([section, path]) => [path, section]),
+);
+
 export function AdminPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, logout } = useAuth();
-  const activeSection = searchParams.get('section') ?? 'dashboard';
+  const activeSection =
+    ADMIN_PATH_SECTIONS[location.pathname] ?? searchParams.get('section') ?? 'dashboard';
+
+  const handleSectionChange = (section: string) => {
+    navigate(ADMIN_SECTION_PATHS[section] ?? '/admin');
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   const content = useMemo(() => {
     switch (activeSection) {
@@ -47,11 +76,11 @@ export function AdminPage() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar
         activeSection={activeSection}
-        onSectionChange={(section) => setSearchParams({ section })}
+        onSectionChange={handleSectionChange}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar user={user} onLogout={logout} />
+        <TopBar user={user} onLogout={handleLogout} />
 
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">{content}</div>
