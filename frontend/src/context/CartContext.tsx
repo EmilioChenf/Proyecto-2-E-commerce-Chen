@@ -30,12 +30,12 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-interface CartState {
+export interface CartState {
   items: CartItem[];
   error: string | null;
 }
 
-type CartAction =
+export type CartAction =
   | { type: 'add'; product: ClientProduct; quantity: number }
   | { type: 'remove'; productId: number }
   | { type: 'updateQuantity'; productId: number; quantity: number }
@@ -57,7 +57,7 @@ function getStoredCart() {
   }
 }
 
-function cartReducer(state: CartState, action: CartAction): CartState {
+export function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'add': {
       const { product, quantity } = action;

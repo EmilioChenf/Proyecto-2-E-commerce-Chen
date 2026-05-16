@@ -49,3 +49,12 @@ Si `DATABASE_URL` existe, el backend la usa sobre las variables `DB_*`.
 ## API REST
 
 La documentacion de endpoints REST esta en `docs/API.md`.
+
+## Pruebas
+
+Las pruebas unitarias del frontend usan Vitest:
+
+```bash
+cd frontend
+npm test
+```
