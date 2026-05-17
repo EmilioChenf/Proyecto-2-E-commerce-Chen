@@ -38,6 +38,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 app.use('/health', healthRoutes);
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/categories', categoryRoutes);

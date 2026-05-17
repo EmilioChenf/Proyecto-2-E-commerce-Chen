@@ -5,8 +5,10 @@ import { waitForDatabase } from './db/pool.js';
 async function bootstrap() {
   await waitForDatabase();
 
-  app.listen(env.port, () => {
-    console.log(`[server] Backend escuchando en el puerto ${env.port}`);
+  app.listen(env.port, env.host, () => {
+    console.log(
+      `[server] Backend escuchando en ${env.host}:${env.port}`,
+    );
   });
 }
 

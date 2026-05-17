@@ -27,7 +27,7 @@ services:
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:-secret_jwt_dev}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080,http://localhost:5173}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       DB_HOST: db
       DB_PORT: 5432
@@ -48,7 +48,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "node -e \"fetch('http://127.0.0.1:3000/health').then((res)=>{if(!res.ok)process.exit(1)}).catch(()=>process.exit(1))\"",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then((res)=>{if(!res.ok)process.exit(1)}).catch(()=>process.exit(1))\"",
         ]
       interval: 15s
       timeout: 5s

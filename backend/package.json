@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:init": "node src/scripts/initDatabase.js",
     "dev": "nodemon src/server.js",
     "lint": "eslint .",
     "start": "node src/server.js"

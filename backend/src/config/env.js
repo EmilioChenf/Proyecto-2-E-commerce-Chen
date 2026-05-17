@@ -15,16 +15,31 @@ function toList(value, fallback) {
     .filter(Boolean);
 }
 
+function uniqueList(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const frontendUrl = process.env.FRONTEND_URL ?? (
+  nodeEnv === 'production' ? '' : 'http://localhost:8080'
+);
+const defaultCorsOrigins =
+  nodeEnv === 'production'
+    ? ''
+    : 'http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:8080';
+const corsOrigins = uniqueList([
+  ...toList(process.env.CORS_ORIGIN, defaultCorsOrigins),
+  frontendUrl,
+]);
+
 export const env = {
-  nodeEnv: process.env.NODE_ENV ?? 'development',
+  nodeEnv,
   port: toNumber(process.env.PORT, 3000),
+  host: process.env.HOST ?? '0.0.0.0',
   jwtSecret: process.env.JWT_SECRET ?? 'secret_jwt_dev',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
-  corsOrigins: toList(
-    process.env.CORS_ORIGIN,
-    'http://localhost:5173,http://localhost:8080',
-  ),
-  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:8080',
+  corsOrigins,
+  frontendUrl,
   db: {
     databaseUrl: process.env.DATABASE_URL,
     host: process.env.DB_HOST ?? 'localhost',
