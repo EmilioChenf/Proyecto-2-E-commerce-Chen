@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { pool } from '../db/pool.js';
+import { pool } from './pool.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +11,7 @@ const initSqlPath = path.resolve(__dirname, '../sql/init.sql');
 async function initDatabase() {
   const sql = await fs.readFile(initSqlPath, 'utf8');
   await pool.query(sql);
-  console.log('[db] Esquema y datos semilla aplicados correctamente.');
+  console.log('[db] Base de datos inicializada correctamente.');
 }
 
 initDatabase()

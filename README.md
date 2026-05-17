@@ -232,6 +232,18 @@ npm install
 DATABASE_URL="postgresql://usuario:password@host:5432/base" npm run db:init
 ```
 
+En Render Shell del backend:
+
+```bash
+npm run db:init
+```
+
+En un Render Job, usar la misma configuracion de entorno del backend y este comando:
+
+```bash
+npm ci && npm run db:init
+```
+
 En Windows PowerShell:
 
 ```powershell
@@ -241,7 +253,7 @@ $env:DATABASE_URL="postgresql://usuario:password@host:5432/base"
 npm run db:init
 ```
 
-El script ejecuta `backend/src/sql/init.sql`, que usa `CREATE TABLE IF NOT EXISTS` y `INSERT ... ON CONFLICT`. No ejecuta `CREATE DATABASE`, `CREATE USER` ni borra datos reales.
+El script `backend/src/db/initDatabase.js` ejecuta `backend/src/sql/init.sql`, que usa `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `INSERT ... ON CONFLICT` y `CREATE OR REPLACE VIEW`. No ejecuta `CREATE DATABASE`, `CREATE USER` ni borra tablas o datos reales.
 
 ### 2. Crear Backend Web Service
 

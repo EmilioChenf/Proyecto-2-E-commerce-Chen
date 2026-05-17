@@ -272,9 +272,7 @@ SELECT setval(pg_get_serial_sequence('productos', 'id_producto'), COALESCE(MAX(i
 SELECT setval(pg_get_serial_sequence('ventas', 'id_venta'), COALESCE(MAX(id_venta), 1), true) FROM ventas;
 SELECT setval(pg_get_serial_sequence('detalle_venta', 'id_detalle'), COALESCE(MAX(id_detalle), 1), true) FROM detalle_venta;
 
-DROP VIEW IF EXISTS vista_resumen_ventas;
-
-CREATE VIEW vista_resumen_ventas AS
+CREATE OR REPLACE VIEW vista_resumen_ventas AS
 SELECT
   v.id_venta,
   v.fecha,
