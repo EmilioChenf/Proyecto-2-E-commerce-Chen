@@ -78,7 +78,7 @@ export function Users() {
     try {
       await deleteUserRequest(selectedUser.id);
       setUsers((current) => current.filter((item) => item.id !== selectedUser.id));
-      toast.success('Usuario eliminado correctamente.');
+      toast.success('Usuario eliminado con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar el usuario.'));
     } finally {
@@ -112,7 +112,11 @@ export function Users() {
 
       setIsDialogOpen(false);
       setFormData({});
-      toast.success('Usuario guardado correctamente.');
+      toast.success(
+        selectedUser
+          ? 'Usuario editado con exito.'
+          : 'Usuario agregado con exito.',
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el usuario.'));
     }

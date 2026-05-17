@@ -161,7 +161,7 @@ export function Sales() {
       setDraftQuantity(1);
       setDraftItems([]);
       setIsNewSaleOpen(false);
-      toast.success('Venta registrada correctamente.');
+      toast.success('Venta agregada con exito.');
       await loadData();
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo registrar la venta.'));

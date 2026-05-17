@@ -512,7 +512,7 @@ export function Reports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Consultas SQL de la Rubrica</CardTitle>
+          <CardTitle>Consultas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -539,7 +539,7 @@ export function Reports() {
               </div>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900 mb-3">HAVING: mas de 2 unidades</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Productos con mas de 2 unidades vendidas</h3>
               <div className="space-y-2">
                 {havingProducts.map((item) => (
                   <div key={item.product} className="flex justify-between text-sm border-b border-gray-100 pb-2">
@@ -554,10 +554,7 @@ export function Reports() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>JOINs Visibles</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">Ventas + cliente + usuario + pago</h3>
@@ -599,7 +596,11 @@ export function Reports() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Ventas por Producto</CardTitle>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDownloadReport('/reports/top-products/csv', 'ventas-por-producto.csv')}
+          >
             <FileText className="w-4 h-4 mr-2" />
             Ver Detalle
           </Button>

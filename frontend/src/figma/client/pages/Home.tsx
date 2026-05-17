@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Star, TrendingUp, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -13,6 +14,10 @@ export function Home() {
   const featuredProducts = products.filter((product) => product.isFeatured);
   const bestSellers = products.filter((product) => product.isBestSeller).slice(0, 4);
   const newArrivals = products.filter((product) => product.isNew).slice(0, 4);
+  const handleAddToCart = (product: (typeof products)[number]) => {
+    addToCart(product);
+    toast.success('Producto agregado al carrito con exito.');
+  };
 
   return (
     <div className="min-h-screen brand-page-bg">
@@ -31,12 +36,6 @@ export function Home() {
                 className="bg-white text-[var(--primary-hover)] px-8 py-4 rounded-full font-bold text-lg hover:bg-[rgba(165,255,242,0.55)] transition shadow-lg"
               >
                 Ver Catalogo
-              </Link>
-              <Link
-                to="/catalogo?category=Sets"
-                className="bg-[var(--color-primary)] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[var(--primary-hover)] transition shadow-lg"
-              >
-                Ver Ofertas
               </Link>
             </div>
           </div>
@@ -83,7 +82,7 @@ export function Home() {
                     <span className="text-sm text-gray-500">{product.stock} disponibles</span>
                   </div>
                   <button
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     className="w-full brand-primary-gradient text-[#10231f] py-3 rounded-full font-bold  transition flex items-center justify-center space-x-2"
                   >
                     <ShoppingCart className="w-5 h-5" />
@@ -173,7 +172,7 @@ export function Home() {
                   <div className="flex items-center justify-between">
                     <span className="text-xl font-bold text-gray-900">{formatCurrencyGTQ(product.price)}</span>
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
                       className="bg-[var(--color-primary)] text-white p-2 rounded-full hover:bg-[var(--primary-hover)] transition"
                     >
                       <ShoppingCart className="w-4 h-4" />
@@ -222,7 +221,7 @@ export function Home() {
                   <div className="flex items-center justify-between">
                     <span className="text-xl font-bold text-gray-900">{formatCurrencyGTQ(product.price)}</span>
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
                       className="bg-[var(--color-primary)] text-white p-2 rounded-full hover:bg-[var(--primary-hover)] transition"
                     >
                       <ShoppingCart className="w-4 h-4" />

@@ -1,4 +1,14 @@
-import { LayoutDashboard, Package, FolderTree, Truck, Users, UserCog, ShoppingCart, CreditCard, BarChart3, Settings } from 'lucide-react';
+import {
+  BarChart3,
+  CreditCard,
+  FolderTree,
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Truck,
+  UserCog,
+  Users,
+} from 'lucide-react';
 
 interface SidebarProps {
   activeSection: string;
@@ -9,14 +19,13 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Inicio', icon: LayoutDashboard },
     { id: 'products', label: 'Productos', icon: Package },
-    { id: 'categories', label: 'Categorías', icon: FolderTree },
+    { id: 'categories', label: 'Categorias', icon: FolderTree },
     { id: 'suppliers', label: 'Proveedores', icon: Truck },
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'users', label: 'Usuarios', icon: UserCog },
     { id: 'sales', label: 'Ventas', icon: ShoppingCart },
-    { id: 'payments', label: 'Métodos de Pago', icon: CreditCard },
+    { id: 'payments', label: 'Metodos de Pago', icon: CreditCard },
     { id: 'reports', label: 'Reportes', icon: BarChart3 },
-    { id: 'settings', label: 'Configuración', icon: Settings },
   ];
 
   return (

@@ -77,7 +77,7 @@ export function Suppliers() {
     try {
       await deleteSupplierRequest(selectedSupplier.id);
       setSuppliers((current) => current.filter((item) => item.id !== selectedSupplier.id));
-      toast.success('Proveedor eliminado correctamente.');
+      toast.success('Proveedor eliminado con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar el proveedor.'));
     } finally {
@@ -136,7 +136,11 @@ export function Suppliers() {
       setIsDialogOpen(false);
       setFormData({});
       setFormErrors({});
-      toast.success('Proveedor guardado correctamente.');
+      toast.success(
+        selectedSupplier
+          ? 'Proveedor editado con exito.'
+          : 'Proveedor agregado con exito.',
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el proveedor.'));
     }

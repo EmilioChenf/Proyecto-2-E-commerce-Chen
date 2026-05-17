@@ -82,7 +82,7 @@ export function PaymentMethods() {
     try {
       await deletePaymentMethodRequest(selectedMethod.id);
       setPaymentMethods((current) => current.filter((item) => item.id !== selectedMethod.id));
-      toast.success('Metodo de pago eliminado correctamente.');
+      toast.success('Metodo de pago eliminado con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar el metodo de pago.'));
     } finally {
@@ -114,7 +114,11 @@ export function PaymentMethods() {
 
       setIsDialogOpen(false);
       setFormData({});
-      toast.success('Metodo de pago guardado correctamente.');
+      toast.success(
+        selectedMethod
+          ? 'Metodo de pago editado con exito.'
+          : 'Metodo de pago agregado con exito.',
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el metodo de pago.'));
     }

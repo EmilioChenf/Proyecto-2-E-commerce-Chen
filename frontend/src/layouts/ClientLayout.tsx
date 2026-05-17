@@ -4,6 +4,7 @@ import { CartProvider } from '@/context/CartContext';
 import { StoreProvider } from '@/context/StoreContext';
 import { Header } from '@/figma/client/Header';
 import { Footer } from '@/figma/client/Footer';
+import { Toaster } from '@/figma/client/ui/sonner';
 
 export function ClientLayout() {
   return (
@@ -16,6 +17,7 @@ export function ClientLayout() {
           </main>
           <Footer />
         </div>
+        <Toaster position="top-center" richColors closeButton />
       </CartProvider>
     </StoreProvider>
   );

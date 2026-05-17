@@ -25,7 +25,6 @@ const ADMIN_SECTION_PATHS: Record<string, string> = {
   sales: '/admin/ventas',
   payments: '/admin/metodos-pago',
   reports: '/admin/reportes',
-  settings: '/admin/configuracion',
 };
 
 const ADMIN_PATH_SECTIONS: Record<string, string> = Object.fromEntries(
@@ -87,7 +86,7 @@ export function AdminPage() {
         </main>
       </div>
 
-      <Toaster />
+      <Toaster position="top-center" richColors closeButton />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ShoppingCart, Minus, Plus, Package, Tag, Award } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -38,6 +39,7 @@ export function ProductDetail() {
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
+    toast.success('Producto agregado al carrito con exito.');
     setQuantity(1);
   };
 

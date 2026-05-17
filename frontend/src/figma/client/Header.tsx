@@ -42,9 +42,6 @@ export function Header() {
             <div className="w-10 h-10 brand-primary-gradient rounded-full flex items-center justify-center">
               <span className="text-[#10231f] font-bold text-lg">P</span>
             </div>
-            <span className="text-xl font-bold text-gray-900 hidden sm:block">
-              Plushie Paradise
-            </span>
           </Link>
 
           <nav className="hidden md:flex items-center space-x-8">

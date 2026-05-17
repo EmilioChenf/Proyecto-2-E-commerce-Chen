@@ -78,7 +78,7 @@ export function Customers() {
     try {
       await deleteCustomerRequest(selectedCustomer.id);
       setCustomers((current) => current.filter((item) => item.id !== selectedCustomer.id));
-      toast.success('Cliente eliminado correctamente.');
+      toast.success('Cliente eliminado con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar el cliente.'));
     } finally {
@@ -137,7 +137,11 @@ export function Customers() {
       setIsDialogOpen(false);
       setFormData({});
       setFormErrors({});
-      toast.success('Cliente guardado correctamente.');
+      toast.success(
+        selectedCustomer
+          ? 'Cliente editado con exito.'
+          : 'Cliente agregado con exito.',
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el cliente.'));
     }

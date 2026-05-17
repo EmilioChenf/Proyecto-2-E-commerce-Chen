@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ShoppingCart, Eye, SlidersHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useCart } from '@/context/CartContext';
 import { useStore } from '@/context/StoreContext';
@@ -114,6 +115,14 @@ export function Catalog() {
     setPriceRange([0, 2000]);
     setInStockOnly(false);
   }, []);
+
+  const handleAddToCart = useCallback(
+    (product: (typeof products)[number]) => {
+      addToCart(product);
+      toast.success('Producto agregado al carrito con exito.');
+    },
+    [addToCart],
+  );
 
   return (
     <div className="min-h-screen brand-page-bg">
@@ -316,7 +325,7 @@ export function Catalog() {
                         <span className="text-sm text-gray-500">{product.stock} en stock</span>
                       </div>
                       <button
-                        onClick={() => addToCart(product)}
+                        onClick={() => handleAddToCart(product)}
                         disabled={product.stock === 0}
                         className={`w-full py-3 rounded-full font-bold transition flex items-center justify-center space-x-2 ${
                           product.stock === 0

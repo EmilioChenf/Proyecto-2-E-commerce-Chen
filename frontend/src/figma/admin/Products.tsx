@@ -129,7 +129,7 @@ export function Products() {
     try {
       await deleteProductRequest(selectedProduct.id);
       setProducts((current) => current.filter((item) => item.id !== selectedProduct.id));
-      toast.success('Producto eliminado correctamente.');
+      toast.success('Producto eliminado con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar el producto.'));
     } finally {
@@ -204,7 +204,11 @@ export function Products() {
       setIsDialogOpen(false);
       setFormData({});
       setFormErrors({});
-      toast.success('Producto guardado correctamente.');
+      toast.success(
+        selectedProduct
+          ? 'Producto editado con exito.'
+          : 'Producto agregado con exito.',
+      );
       await loadData();
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar el producto.'));

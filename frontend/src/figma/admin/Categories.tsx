@@ -72,7 +72,7 @@ export function Categories() {
     try {
       await deleteCategoryRequest(selectedCategory.id);
       setCategories((current) => current.filter((item) => item.id !== selectedCategory.id));
-      toast.success('Categoria eliminada correctamente.');
+      toast.success('Categoria eliminada con exito.');
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo eliminar la categoria.'));
     } finally {
@@ -115,7 +115,11 @@ export function Categories() {
       setIsDialogOpen(false);
       setFormData({});
       setFormErrors({});
-      toast.success('Categoria guardada correctamente.');
+      toast.success(
+        selectedCategory
+          ? 'Categoria editada con exito.'
+          : 'Categoria agregada con exito.',
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'No se pudo guardar la categoria.'));
     }
