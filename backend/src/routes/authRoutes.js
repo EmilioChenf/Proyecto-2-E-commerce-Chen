@@ -7,6 +7,16 @@ import { validateRequest } from '../middlewares/validateRequest.js';
 
 const router = Router();
 
+function methodNotAllowed(_req, res) {
+  res.status(405).json({
+    error: true,
+    message: 'Metodo no permitido. Usa POST para este endpoint.',
+  });
+}
+
+router.get('/login', methodNotAllowed);
+router.get('/register', methodNotAllowed);
+
 router.post(
   '/login',
   [
