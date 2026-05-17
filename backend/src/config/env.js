@@ -23,10 +23,15 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
 const frontendUrl = process.env.FRONTEND_URL ?? (
   nodeEnv === 'production' ? '' : 'http://localhost:8080'
 );
-const defaultCorsOrigins =
-  nodeEnv === 'production'
-    ? ''
-    : 'http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173,http://127.0.0.1:8080';
+const defaultCorsOrigins = [
+  'https://plushie-paradise-frontend.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:8080',
+  'http://127.0.0.1:3000',
+].join(',');
 const corsOrigins = uniqueList([
   ...toList(process.env.CORS_ORIGIN, defaultCorsOrigins),
   frontendUrl,

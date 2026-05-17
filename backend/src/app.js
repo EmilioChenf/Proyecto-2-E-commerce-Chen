@@ -22,18 +22,22 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || env.corsOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || env.corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      return callback(new Error('Origen no permitido por CORS.'));
-    },
-    credentials: true,
-  }),
-);
+    return callback(new Error('Origen no permitido por CORS.'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 

@@ -1,6 +1,17 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+function normalizeApiUrl(value?: string) {
+  const apiUrl = value?.trim() || '/api';
+  const normalized = apiUrl.replace(/\/+$/, '');
+
+  if (normalized === '/api' || normalized.endsWith('/api')) {
+    return normalized;
+  }
+
+  return `${normalized}/api`;
+}
+
+const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL);
 
 export const TOKEN_STORAGE_KEY = 'plushstore_token';
 export const USER_STORAGE_KEY = 'plushstore_user';

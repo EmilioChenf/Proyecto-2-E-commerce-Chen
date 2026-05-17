@@ -1,6 +1,17 @@
 import type { SyntheticEvent } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL ?? '/api';
+function normalizeApiUrl(value?: string) {
+  const apiUrl = value?.trim() || '/api';
+  const normalized = apiUrl.replace(/\/+$/, '');
+
+  if (normalized === '/api' || normalized.endsWith('/api')) {
+    return normalized;
+  }
+
+  return `${normalized}/api`;
+}
+
+const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL);
 
 export const PRODUCT_PLACEHOLDER_IMAGE =
   '/images/productos/placeholder-producto.png';
