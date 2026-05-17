@@ -4,15 +4,15 @@ import { LoadingScreen } from '@/components/common/LoadingScreen';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from './ProtectedRoute';
 import { ClientLayout } from '@/layouts/ClientLayout';
-import { AuthPage } from '@/pages/auth/AuthPage';
+import { AuthPage } from '@/pages/Login/AuthPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
-import { Home } from '@/figma/client/pages/Home';
-import { Catalog } from '@/figma/client/pages/Catalog';
-import { ProductDetail } from '@/figma/client/pages/ProductDetail';
-import { Cart } from '@/figma/client/pages/Cart';
-import { Checkout } from '@/figma/client/pages/Checkout';
-import { Confirmation } from '@/figma/client/pages/Confirmation';
-import { Orders } from '@/figma/client/pages/Orders';
+import { Home } from '@/pages/Cliente/src/app/pages/Home';
+import { Catalog } from '@/pages/Cliente/src/app/pages/Catalog';
+import { ProductDetail } from '@/pages/Cliente/src/app/pages/ProductDetail';
+import { Cart } from '@/pages/Cliente/src/app/pages/Cart';
+import { Checkout } from '@/pages/Cliente/src/app/pages/Checkout';
+import { Confirmation } from '@/pages/Cliente/src/app/pages/Confirmation';
+import { Orders } from '@/pages/Cliente/src/app/pages/Orders';
 import { getPathForRole } from '@/context/AuthContext';
 
 function RootEntry() {
