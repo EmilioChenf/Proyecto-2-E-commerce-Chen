@@ -164,10 +164,10 @@ ON CONFLICT (id_proveedor) DO UPDATE SET
 
 INSERT INTO usuarios (id_usuario, nombre, correo, password, id_rol, google_id)
 VALUES
-  (1, 'Administrador Principal', 'admin@tienda.com', '$2b$10$j/3VheMHkQWAsMVI/30Ka.CIF1EPoKJyUVJ8b056GHyN9Kz3Vby82', 1, NULL),
-  (2, 'Cliente Demo', 'cliente@tienda.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL),
-  (3, 'Carlos Ruiz', 'carlos@cliente.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL),
-  (4, 'Ana Lopez', 'ana@cliente.com', '$2b$10$Da0wIel97GaOVtVByNH91OmW8cPbeGNY.sWVSfAQwyRFP.K3AMRZG', 2, NULL)
+  (1, 'Administrador Principal', 'admin@tienda.com', '$2b$10$bbdiRGiP6xK9gKr0cQUI3.BakiBXbSHjUV/9UZIXT9To1DWbbN.OG', 1, NULL),
+  (2, 'Cliente Demo', 'cliente@tienda.com', '$2b$10$gv8r9LTpRJNQgOAe8SzSNey4dUtDJBmAFufUOqQB4c.CIMMPhWHLa', 2, NULL),
+  (3, 'Carlos Ruiz', 'carlos@cliente.com', '$2b$10$gv8r9LTpRJNQgOAe8SzSNey4dUtDJBmAFufUOqQB4c.CIMMPhWHLa', 2, NULL),
+  (4, 'Ana Lopez', 'ana@cliente.com', '$2b$10$gv8r9LTpRJNQgOAe8SzSNey4dUtDJBmAFufUOqQB4c.CIMMPhWHLa', 2, NULL)
 ON CONFLICT (id_usuario) DO UPDATE SET
   nombre = EXCLUDED.nombre,
   correo = EXCLUDED.correo,

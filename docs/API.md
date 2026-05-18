@@ -1,4 +1,10 @@
-# API REST - PlushStore
+# API REST - Plushie Paradise
+
+Base produccion:
+
+```text
+https://plushie-paradise-api.onrender.com/api
+```
 
 Base local:
 
@@ -25,8 +31,9 @@ Authorization: Bearer <token>
 
 | Metodo | Endpoint | Descripcion | Body esperado | Respuesta ejemplo |
 |---|---|---|---|---|
-| POST | `/api/auth/login` | Inicia sesion. | `{ "correo": "admin@tienda.com", "password": "Admin123!" }` | `200 { "token": "...", "user": { "id_usuario": 1, "rol": "ADMIN" } }` |
-| POST | `/api/auth/register` | Registra cliente. | `{ "nombre": "Cliente", "correo": "cliente@test.com", "password": "Cliente123!", "telefono": "555-0000" }` | `201 { "token": "...", "user": { "rol": "CLIENTE" } }` |
+| POST | `/api/auth/login` | Inicia sesion. | `{ "correo": "admin@tienda.com", "password": "Admin123" }` | `200 { "token": "...", "user": { "id_usuario": 1, "rol": "ADMIN" } }` |
+| POST | `/api/auth/register` | Registra cliente. | `{ "nombre": "Cliente", "correo": "cliente@test.com", "password": "Cliente123", "telefono": "555-0000" }` | `201 { "token": "...", "user": { "rol": "CLIENTE" } }` |
+| POST | `/api/auth/google` | Inicia o registra sesion con Google OAuth. | `{ "accessToken": "..." }` | `200 { "token": "...", "user": { "rol": "CLIENTE" } }` |
 | GET | `/api/auth/me` | Obtiene usuario autenticado. | No aplica. | `200 { "user": { "id_usuario": 1, "correo": "admin@tienda.com" } }` |
 
 ## Productos
@@ -73,7 +80,7 @@ CRUD completo. Requiere rol `ADMIN`.
 |---|---|---|---|---|
 | GET | `/api/customers` | Lista clientes. | No aplica. | `200 [{ "id_cliente": 1, "nombre": "Cliente Demo", "total_compras": 2 }]` |
 | GET | `/api/customers/:id` | Obtiene cliente por id. | No aplica. | `200 { "id_cliente": 1, "nombre": "Cliente Demo" }` |
-| POST | `/api/customers` | Crea cliente y usuario asociado. | `{ "nombre": "Cliente", "correo": "cliente@test.com", "telefono": "555-0000", "password": "Cliente123!" }` | `201 { "id_cliente": 4, "id_usuario": 5, "nombre": "Cliente" }` |
+| POST | `/api/customers` | Crea cliente y usuario asociado. | `{ "nombre": "Cliente", "correo": "cliente@test.com", "telefono": "555-0000", "password": "Cliente123" }` | `201 { "id_cliente": 4, "id_usuario": 5, "nombre": "Cliente" }` |
 | PUT | `/api/customers/:id` | Actualiza cliente y usuario asociado. | `{ "nombre": "Cliente editado", "correo": "cliente@test.com", "telefono": "555-0001" }` | `200 { "id_cliente": 4, "nombre": "Cliente editado" }` |
 | DELETE | `/api/customers/:id` | Elimina cliente y usuario asociado. | No aplica. | `200 { "success": true, "message": "Cliente eliminado correctamente." }` |
 
@@ -105,6 +112,7 @@ Requieren rol `ADMIN`.
 
 | Metodo | Endpoint | Descripcion |
 |---|---|---|
+| GET | `/api/reports/recent-sales.csv` | Descarga CSV de ventas recientes. |
 | GET | `/api/reports/recent-sales/csv` | Descarga CSV de ventas recientes. |
 | GET | `/api/reports/recent-sales/pdf` | Descarga PDF de ventas recientes. |
 | GET | `/api/reports/top-products/csv` | Descarga CSV de productos mas vendidos. |
@@ -143,7 +151,7 @@ Login admin:
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"correo\":\"admin@tienda.com\",\"password\":\"Admin123!\"}"
+  -d "{\"correo\":\"admin@tienda.com\",\"password\":\"Admin123\"}"
 ```
 
 Endpoint agregado con token:

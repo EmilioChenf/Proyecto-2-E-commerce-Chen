@@ -1,20 +1,51 @@
-# Proyecto 2 - E-commerce PlushStore
+# Plushie Paradise
 
-Aplicacion e-commerce para venta de peluches y productos relacionados. Incluye frontend React/Vite, backend Node.js/Express, API REST con SQL explicito y base de datos PostgreSQL inicializada con Docker.
+E-commerce full stack para venta de peluches y merchandising de Escandalosos y Snoopy. El proyecto incluye frontend React/Vite, backend Node.js/Express, API REST, autenticacion por roles, PostgreSQL, reportes administrativos, exportaciones CSV/PDF, Docker Compose para desarrollo local y despliegue separado en Render.
 
-## Tecnologias
+## Enlaces de producción
 
-- React 18 + Vite
-- TypeScript
+Frontend:
+https://plushie-paradise-frontend.onrender.com
+
+Backend/API:
+https://plushie-paradise-api.onrender.com
+
+Health Check:
+https://plushie-paradise-api.onrender.com/api/health
+
+Repositorio:
+https://github.com/EmilioChenf/Proyecto-2-E-commerce-Chen
+
+![Vista Login](docs/images/login.png)
+![Vista Cliente](docs/images/cliente.png)
+
+> Las capturas deben colocarse en `docs/images/login.png` y `docs/images/cliente.png`.
+
+## Tecnologías
+
+- React 18, Vite y TypeScript
 - React Router
-- React Context
-- Node.js + Express
-- PostgreSQL
+- React Context y hooks
+- Vitest
+- ESLint
+- Node.js 20 y Express
+- PostgreSQL 16
 - SQL explicito sin ORM
 - Docker Compose
-- Nginx para servir el frontend y proxyear API
-- ESLint
-- Vitest
+- Nginx para servir frontend en Docker
+- Render Web Service, Static Site y Render Postgres
+
+## Arquitectura
+
+El frontend consume exclusivamente la API REST del backend mediante Axios centralizado en `frontend/src/services/api.ts`. El backend expone rutas bajo el prefijo `/api`, responde JSON y se conecta a PostgreSQL mediante `pg`.
+
+En local, Docker Compose levanta tres servicios:
+
+- `db`: PostgreSQL con usuario `proy2`, password `secret` y base `tienda_peluches`.
+- `backend`: Express en `http://localhost:3000`.
+- `frontend`: React servido por Nginx en `http://localhost:8080`.
+
+En Render, el backend, frontend y PostgreSQL se despliegan como servicios separados. No se usa `docker-compose.yml` en produccion.
 
 ## Estructura
 
@@ -22,18 +53,23 @@ Aplicacion e-commerce para venta de peluches y productos relacionados. Incluye f
 .
 ├── backend/
 │   ├── src/
+│   │   ├── config/
 │   │   ├── controllers/
-│   │   ├── routes/
-│   │   ├── middlewares/
-│   │   ├── services/
 │   │   ├── db/
-│   │   └── sql/init.sql
+│   │   ├── middlewares/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── sql/init.sql
+│   │   ├── app.js
+│   │   └── server.js
 │   ├── Dockerfile
 │   └── package.json
 ├── frontend/
+│   ├── public/images/productos/
 │   ├── src/
 │   │   ├── context/
 │   │   ├── figma/
+│   │   ├── layouts/
 │   │   ├── pages/
 │   │   ├── routes/
 │   │   ├── services/
@@ -41,27 +77,42 @@ Aplicacion e-commerce para venta de peluches y productos relacionados. Incluye f
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
-├── docs/API.md
+├── docs/
+│   ├── API.md
+│   └── images/
 ├── docker-compose.yml
+├── render.yaml
 └── .env.example
 ```
 
 ## Requisitos Previos
 
-- Docker Desktop o Docker Engine con Docker Compose
-- Node.js 20+ solo si se ejecuta sin Docker
-- npm
+- Docker Desktop o Docker Engine con Docker Compose.
+- Node.js 20+ y npm si se ejecuta sin Docker.
+- Git.
 
-## Variables De Entorno
+## Variables de Entorno
 
-El archivo principal de ejemplo esta en `.env.example`.
+El archivo principal de ejemplo es `.env.example`.
 
-Credenciales locales requeridas para PostgreSQL:
+Variables principales para Render:
+
+```env
+PORT=3000
+NODE_ENV=production
+DATABASE_URL=
+FRONTEND_URL=https://plushie-paradise-frontend.onrender.com
+JWT_SECRET=
+VITE_API_URL=https://plushie-paradise-api.onrender.com/api
+```
+
+Variables locales para Docker/PostgreSQL:
 
 ```env
 POSTGRES_DB=tienda_peluches
 POSTGRES_USER=proy2
 POSTGRES_PASSWORD=secret
+POSTGRES_PORT=5432
 
 DB_HOST=db
 DB_PORT=5432
@@ -70,18 +121,20 @@ DB_USER=proy2
 DB_PASSWORD=secret
 ```
 
-El backend tambien soporta `DATABASE_URL`, util para Render:
+Variables opcionales:
 
 ```env
-DATABASE_URL=postgresql://usuario:password@host:5432/base
+JWT_EXPIRES_IN=7d
+DB_CONNECTION_LIMIT=10
+CORS_ORIGIN=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+VITE_GOOGLE_CLIENT_ID=
 ```
 
-Ejemplos adicionales:
+No se deben subir archivos `.env` reales al repositorio.
 
-- `backend/.env.example`
-- `frontend/.env.example`
-
-## Ejecutar Con Docker
+## Ejecución Local con Docker
 
 Desde la raiz del proyecto:
 
@@ -89,18 +142,18 @@ Desde la raiz del proyecto:
 docker compose up --build
 ```
 
-No se requieren pasos adicionales. Docker levanta:
-
-- PostgreSQL con datos semilla desde `backend/src/sql/init.sql`
-- Backend Express en el puerto `3000`
-- Frontend React servido por Nginx en el puerto `8080`
-
 URLs locales:
 
 - Frontend: http://localhost:8080
 - Backend: http://localhost:3000
-- Healthcheck backend: http://localhost:3000/api/health
+- Health Check: http://localhost:3000/api/health
 - PostgreSQL: localhost:5432
+
+Para detener contenedores:
+
+```bash
+docker compose down
+```
 
 Para reiniciar la base desde cero:
 
@@ -109,265 +162,235 @@ docker compose down -v
 docker compose up --build
 ```
 
-## Usuarios De Prueba
+Docker no requiere pasos adicionales: PostgreSQL inicializa con `backend/src/sql/init.sql` y el backend tambien verifica/ejecuta la inicializacion al arrancar.
 
-| Rol | Correo | Password |
-|---|---|---|
-| ADMIN | `admin@tienda.com` | `Admin123!` |
-| CLIENTE | `cliente@tienda.com` | `Cliente123!` |
+## Ejecución Sin Docker
 
-## Funcionalidades Por Rol
-
-ADMIN:
-
-- Dashboard administrativo
-- CRUD de productos
-- CRUD de categorias
-- CRUD de proveedores
-- CRUD de clientes
-- Gestion de usuarios, ventas y metodos de pago
-- Reportes con datos reales desde PostgreSQL
-- Exportacion CSV/PDF de reportes
-
-CLIENTE:
-
-- Login y registro
-- Catalogo de productos
-- Detalle de producto
-- Carrito
-- Checkout con validaciones
-- Confirmacion de compra
-- Historial de pedidos
-
-## Endpoints Principales
-
-La documentacion completa esta en `docs/API.md`.
-
-Resumen:
-
-- `POST /api/auth/login`
-- `POST /api/auth/register`
-- `GET /api/auth/me`
-- `GET /api/products`
-- `POST /api/products`
-- `PUT /api/products/:id`
-- `DELETE /api/products/:id`
-- `GET /api/categories`
-- `POST /api/categories`
-- `GET /api/suppliers`
-- `POST /api/suppliers`
-- `GET /api/customers`
-- `POST /api/customers`
-- `GET /api/sales`
-- `POST /api/sales`
-- `GET /api/reports/overview`
-
-Los endpoints protegidos usan:
-
-```http
-Authorization: Bearer <token>
-```
-
-## Reportes Y Exportacion
-
-La vista `Admin > Reportes` consume datos reales desde:
-
-```http
-GET /api/reports/overview
-```
-
-Reportes visibles:
-
-- Total de ventas e ingresos
-- Ventas recientes
-- Productos mas vendidos
-- Productos con bajo stock
-- Ventas por metodo de pago
-- Ventas por fecha
-- Clientes con mas compras
-
-Exportaciones disponibles desde la UI:
-
-- `GET /api/reports/recent-sales/csv`
-- `GET /api/reports/recent-sales/pdf`
-- `GET /api/reports/top-products/csv`
-- `GET /api/reports/top-products/pdf`
-- `GET /api/reports/low-stock/csv`
-- `GET /api/reports/low-stock/pdf`
-- `GET /api/reports/sales-by-payment/csv`
-- `GET /api/reports/sales-by-date/csv`
-
-## Pruebas
-
-Las pruebas unitarias del frontend usan Vitest:
-
-```bash
-cd frontend
-npm test
-```
-
-Pruebas incluidas:
-
-- Formato de moneda `formatCurrencyGTQ`
-- Validaciones de email y telefono
-- Reducer del carrito
-
-## Deploy En Render
-
-Render debe desplegar este monorepo como servicios separados. No uses `docker-compose.yml` en produccion; ese archivo queda solo para desarrollo local.
-
-Tambien se incluye `render.yaml` como blueprint opcional. Si prefieres configurar desde la UI de Render, usa estos pasos.
-
-### 1. Crear PostgreSQL
-
-1. Crear un servicio **Render Postgres**.
-2. Guardar el valor **Internal Database URL** o **External Database URL** como `DATABASE_URL` del backend.
-3. No crear usuario ni base de datos manualmente desde SQL de produccion. Render ya entrega usuario, password, host y base.
-
-Para crear tablas y datos demo en una base nueva:
+Backend:
 
 ```bash
 cd backend
 npm install
-DATABASE_URL="postgresql://usuario:password@host:5432/base" npm run db:init
+npm run dev
 ```
-
-En Render Shell del backend:
-
-```bash
-npm run db:init
-```
-
-En un Render Job, usar la misma configuracion de entorno del backend y este comando:
-
-```bash
-npm ci && npm run db:init
-```
-
-En Windows PowerShell:
-
-```powershell
-cd backend
-npm install
-$env:DATABASE_URL="postgresql://usuario:password@host:5432/base"
-npm run db:init
-```
-
-El script `backend/src/db/initDatabase.js` ejecuta `backend/src/sql/init.sql`, que usa `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `INSERT ... ON CONFLICT` y `CREATE OR REPLACE VIEW`. No ejecuta `CREATE DATABASE`, `CREATE USER` ni borra tablas o datos reales.
-
-### 2. Crear Backend Web Service
-
-- Tipo: **Web Service**
-- Root Directory: `backend`
-- Build Command: `npm ci`
-- Start Command: `npm start`
-- Health Check Path: `/api/health`
-
-Variables necesarias:
-
-```env
-NODE_ENV=production
-PORT=3000
-DATABASE_URL=<URL de Render Postgres>
-FRONTEND_URL=https://<tu-frontend>.onrender.com
-JWT_SECRET=<valor-largo-y-seguro>
-```
-
-Opcionales:
-
-```env
-JWT_EXPIRES_IN=7d
-DB_CONNECTION_LIMIT=10
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-CORS_ORIGIN=https://<tu-frontend>.onrender.com
-```
-
-El backend usa `process.env.PORT`, escucha en `0.0.0.0` y usa SSL para PostgreSQL cuando corre en `NODE_ENV=production` con `DATABASE_URL`.
-
-### 3. Crear Frontend Static Site
-
-- Tipo: **Static Site**
-- Root Directory: `frontend`
-- Build Command: `npm ci && npm run build`
-- Publish Directory: `dist`
-
-Variables necesarias:
-
-```env
-VITE_API_URL=https://<tu-backend>.onrender.com/api
-```
-
-Opcional:
-
-```env
-VITE_GOOGLE_CLIENT_ID=
-```
-
-Para React Router en Render Static Site, agrega una regla de rewrite:
-
-```text
-Source: /*
-Destination: /index.html
-Action: Rewrite
-```
-
-El `render.yaml` ya incluye esa regla.
-
-### 4. URLs Y Pruebas
-
-Probar salud del backend:
-
-```bash
-curl https://<tu-backend>.onrender.com/api/health
-```
-
-Respuesta esperada:
-
-```json
-{ "ok": true, "message": "API funcionando" }
-```
-
-Probar login desde la UI:
-
-- Abrir `https://<tu-frontend>.onrender.com`
-- Usar credenciales demo:
-
-| Rol | Correo | Password |
-|---|---|---|
-| ADMIN | `admin@tienda.com` | `Admin123!` |
-| CLIENTE | `cliente@tienda.com` | `Cliente123!` |
-
-Tambien se puede probar la API:
-
-```bash
-curl -X POST https://<tu-backend>.onrender.com/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d "{\"correo\":\"admin@tienda.com\",\"password\":\"Admin123!\"}"
-```
-
-### 5. Errores Comunes En Render
-
-Si falla CORS:
-
-- Verificar que `FRONTEND_URL` en el backend sea exactamente la URL publica del Static Site, incluyendo `https://`.
-- Verificar que `VITE_API_URL` en el frontend apunte al backend y termine en `/api`.
-- Redeployar backend y frontend despues de cambiar variables.
-
-Si falla `DATABASE_URL`:
-
-- Confirmar que la variable exista en el backend, no en el frontend.
-- Usar la URL de Render Postgres completa.
-- Ejecutar `npm run db:init` una vez contra la base nueva si faltan tablas.
-- Revisar logs del backend para errores de SSL o credenciales.
-
-### 6. Validacion Antes De Deploy
 
 Frontend:
 
 ```bash
 cd frontend
 npm install
+npm run dev
+```
+
+Para ejecucion local sin Docker, configurar `DATABASE_URL` o las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
+
+## Credenciales Demo
+
+Admin:
+
+```text
+Correo: admin@tienda.com
+Password: Admin123
+```
+
+Cliente:
+
+```text
+Correo: cliente@tienda.com
+Password: Cliente123
+```
+
+Las credenciales se crean desde `backend/src/sql/init.sql`. El script es idempotente y actualiza los hashes si se vuelve a ejecutar.
+
+## Funcionalidades por Rol
+
+ADMIN:
+
+- Dashboard administrativo con datos reales.
+- CRUD de productos.
+- CRUD de categorias.
+- CRUD de proveedores.
+- CRUD de clientes.
+- Gestion de usuarios.
+- Registro de ventas.
+- Metodos de pago.
+- Reportes agregados.
+- Exportacion CSV/PDF.
+
+CLIENTE:
+
+- Login y registro.
+- Catalogo de productos.
+- Filtros por categoria, marca, busqueda, stock y precio.
+- Detalle de producto.
+- Carrito.
+- Checkout con validaciones.
+- Confirmacion de compra.
+- Historial de pedidos.
+
+## API REST
+
+Base produccion:
+
+```text
+https://plushie-paradise-api.onrender.com/api
+```
+
+Base local:
+
+```text
+http://localhost:3000/api
+```
+
+Todas las respuestas de error son JSON:
+
+```json
+{
+  "error": true,
+  "message": "Mensaje claro del error"
+}
+```
+
+Los endpoints protegidos requieren:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Endpoints Principales
+
+| Metodo | Ruta | Descripcion | Auth | Respuesta JSON breve |
+|---|---|---|---|---|
+| GET | `/api/health` | Verifica API y conexion a DB. | No | `{ "ok": true, "message": "API funcionando" }` |
+| POST | `/api/auth/login` | Inicia sesion. | No | `{ "token": "...", "user": { "rol": "ADMIN" } }` |
+| POST | `/api/auth/register` | Registra cliente. | No | `{ "token": "...", "user": { "rol": "CLIENTE" } }` |
+| POST | `/api/auth/google` | Login/registro con Google. | No | `{ "token": "...", "user": { "rol": "CLIENTE" } }` |
+| GET | `/api/auth/me` | Usuario autenticado. | Si | `{ "user": { "correo": "admin@tienda.com" } }` |
+| GET | `/api/products` | Lista productos con filtros. | No | `[{ "id_producto": 1, "nombre": "Peluche Panda Escandalosos" }]` |
+| GET | `/api/products/:id` | Producto por id. | No | `{ "id_producto": 1, "precio": 189.9 }` |
+| POST | `/api/products` | Crear producto. | ADMIN | `{ "id_producto": 21, "nombre": "Producto" }` |
+| PUT | `/api/products/:id` | Actualizar producto. | ADMIN | `{ "id_producto": 21, "nombre": "Producto editado" }` |
+| DELETE | `/api/products/:id` | Eliminar producto. | ADMIN | `{ "success": true }` |
+| GET | `/api/categories` | Lista categorias. | No | `[{ "id_categoria": 1, "nombre": "Peluches" }]` |
+| POST | `/api/categories` | Crear categoria. | ADMIN | `{ "id_categoria": 13, "nombre": "Nueva" }` |
+| PUT | `/api/categories/:id` | Actualizar categoria. | ADMIN | `{ "id_categoria": 13, "nombre": "Editada" }` |
+| DELETE | `/api/categories/:id` | Eliminar categoria. | ADMIN | `{ "success": true }` |
+| GET | `/api/suppliers` | Lista proveedores. | No | `[{ "id_proveedor": 1, "nombre": "Distribuidora..." }]` |
+| POST | `/api/suppliers` | Crear proveedor. | ADMIN | `{ "id_proveedor": 4, "nombre": "Proveedor" }` |
+| PUT | `/api/suppliers/:id` | Actualizar proveedor. | ADMIN | `{ "id_proveedor": 4, "nombre": "Proveedor editado" }` |
+| DELETE | `/api/suppliers/:id` | Eliminar proveedor. | ADMIN | `{ "success": true }` |
+| GET | `/api/customers` | Lista clientes. | ADMIN | `[{ "id_cliente": 1, "nombre": "Cliente Demo" }]` |
+| POST | `/api/customers` | Crear cliente. | ADMIN | `{ "id_cliente": 4, "id_usuario": 5 }` |
+| GET | `/api/sales` | Lista ventas. | Si | `[{ "id_venta": 1, "total": 389.7 }]` |
+| POST | `/api/sales` | Crear venta con transaccion. | Si | `{ "id_venta": 9, "total": 189.9 }` |
+| GET | `/api/reports/dashboard` | Reporte agregado dashboard. | ADMIN | `{ "summary": { ... }, "salesByMonth": [...] }` |
+| GET | `/api/reports/overview` | Reporte completo. | ADMIN | `{ "summary": { ... }, "bestSellers": [...] }` |
+
+Documentacion extendida: [docs/API.md](docs/API.md).
+
+## CRUDs Disponibles
+
+El backend expone CRUD completo para varias entidades. Como minimo para la rubrica:
+
+- Productos: `GET`, `GET/:id`, `POST`, `PUT/:id`, `DELETE/:id`.
+- Categorias: `GET`, `GET/:id`, `POST`, `PUT/:id`, `DELETE/:id`.
+- Proveedores y clientes tambien tienen CRUD administrativo.
+
+## Reportes y Exportaciones
+
+Reportes visibles en UI:
+
+- Dashboard administrativo.
+- Vista `Admin > Reportes`.
+- Ingresos totales.
+- Productos vendidos.
+- Ticket promedio.
+- Ventas por mes.
+- Ventas por metodo de pago.
+- Productos mas vendidos.
+- Bajo stock.
+- Clientes con mas compras.
+
+Exportaciones:
+
+- `/api/reports/recent-sales.csv`
+- `/api/reports/recent-sales/csv`
+- `/api/reports/recent-sales/pdf`
+- `/api/reports/top-products/csv`
+- `/api/reports/top-products/pdf`
+- `/api/reports/low-stock/csv`
+- `/api/reports/low-stock/pdf`
+- `/api/reports/sales-by-payment/csv`
+- `/api/reports/sales-by-payment/pdf`
+- `/api/reports/sales-by-date/csv`
+- `/api/reports/sales-by-date/pdf`
+- `/api/reports/top-customers/csv`
+- `/api/reports/top-customers/pdf`
+
+La UI administrativa tiene botones de descarga en `Admin > Reportes`.
+
+## Autenticación y Roles
+
+- JWT firmado con `JWT_SECRET`.
+- Login, registro y Google OAuth.
+- Estado de sesion en `frontend/src/context/AuthContext.tsx`.
+- Rutas protegidas en `frontend/src/routes/ProtectedRoute.tsx`.
+- Roles: `ADMIN` y `CLIENTE`.
+- Logout limpia token, usuario y sesion.
+
+## Frontend React
+
+React Router:
+
+- `/login`
+- `/admin/*`
+- `/cliente`
+- `/catalogo`
+- `/producto/:id`
+- `/carrito`
+- `/checkout`
+- `/confirmacion`
+- `/ordenes`
+
+Context:
+
+- `AuthContext`: sesion, login, registro, logout.
+- `CartContext`: carrito global con `useReducer`.
+- `StoreContext`: catalogo, categorias, marcas, metodos de pago, ordenes y checkout.
+
+Hooks usados:
+
+- `useState`
+- `useEffect`
+- `useMemo`
+- `useCallback`
+- `useReducer`
+
+Flujo complejo:
+
+- `frontend/src/context/CartContext.tsx` usa `cartReducer` para agregar, eliminar, actualizar cantidades, limitar por stock y limpiar carrito.
+
+Formularios controlados:
+
+- Login/registro.
+- CRUD administrativo.
+- Checkout con validaciones.
+
+Errores visibles:
+
+- Login muestra alertas.
+- Checkout muestra validaciones.
+- CRUD admin muestra errores con toast.
+- Store/catalogo/reportes muestran errores de carga o reintento.
+
+## Calidad
+
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm test
 npm run build
 ```
 
@@ -375,98 +398,92 @@ Backend:
 
 ```bash
 cd backend
-npm install
+npm run lint
 npm start
 ```
 
-Docker local:
+El backend no tiene script `test`; las pruebas verificadas estan en frontend con Vitest.
 
-```bash
-docker compose up --build
-```
+Pruebas existentes:
 
-Antes de subir cambios, verificar:
+- `frontend/src/utils/format.test.ts`
+- `frontend/src/utils/validation.test.ts`
+- `frontend/src/context/CartContext.test.ts`
 
-- No subir `.env` reales.
-- No subir `node_modules/`.
-- No subir `frontend/dist/`.
-- No depender de `localhost` en produccion.
+## Despliegue en Render
 
-## Lint
+Crear tres servicios:
 
-Frontend:
-
-```bash
-cd frontend
-npm run lint
-```
+1. Render Postgres.
+2. Backend como Web Service.
+3. Frontend como Static Site.
 
 Backend:
 
-```bash
-cd backend
-npm run lint
-```
+- Root Directory: `backend`
+- Build Command: `npm ci`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
 
-## Ejecucion Sin Docker
+Variables backend:
 
-Backend:
-
-```bash
-cd backend
-npm install
-npm run dev
+```env
+NODE_ENV=production
+DATABASE_URL=<Render Postgres URL>
+FRONTEND_URL=https://plushie-paradise-frontend.onrender.com
+JWT_SECRET=<valor-largo-y-seguro>
 ```
 
 Frontend:
 
-```bash
-cd frontend
-npm install
-npm run dev
+- Root Directory: `frontend`
+- Build Command: `npm ci && npm run build`
+- Publish Directory: `dist`
+- Rewrite SPA: `/* -> /index.html`
+
+Variables frontend:
+
+```env
+VITE_API_URL=https://plushie-paradise-api.onrender.com/api
 ```
 
-Para ejecucion local sin Docker, ajustar `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` o usar `DATABASE_URL`.
+El backend ejecuta automaticamente la inicializacion de PostgreSQL al arrancar. No se requiere Render Shell ni Pre-Deploy Command.
 
-## Errores Comunes
+## Troubleshooting
+
+Error CORS:
+
+- Confirmar `FRONTEND_URL=https://plushie-paradise-frontend.onrender.com`.
+- Confirmar `VITE_API_URL=https://plushie-paradise-api.onrender.com/api`.
+- Redeployar backend y frontend.
+
+Error `relation "usuarios" does not exist`:
+
+- El backend ejecuta `backend/src/sql/init.sql` al arrancar.
+- Revisar logs del backend:
+  - `[db] Conexion con PostgreSQL exitosa.`
+  - `[db] Ejecutando inicializacion de PostgreSQL...`
+  - `[db] Tablas e indices creados/verificados correctamente.`
+
+Error al abrir `/api/auth/login` en navegador:
+
+- Login es `POST /api/auth/login`.
+- `GET /api/auth/login` responde 405 indicando que se debe usar POST.
 
 Puerto ocupado:
 
 - Cambiar `FRONTEND_PORT`, `BACKEND_PORT` o `POSTGRES_PORT` en `.env`.
 
-La base no refleja cambios del `init.sql`:
-
-- PostgreSQL solo ejecuta scripts iniciales cuando el volumen esta vacio.
-- Ejecutar:
+Base local no refleja cambios:
 
 ```bash
 docker compose down -v
 docker compose up --build
 ```
 
-Error de conexion a PostgreSQL:
-
-- Verificar que `DB_USER=proy2` y `DB_PASSWORD=secret`.
-- Verificar que el servicio `db` este healthy.
-
-Error de CORS:
-
-- Verificar `CORS_ORIGIN`.
-- En Docker debe incluir `http://localhost:8080` y, si usas Vite directo, `http://localhost:5173`.
-
-Error `EPERM` en Windows al ejecutar build/test local:
-
-- Cerrar procesos Node activos.
-- Volver a ejecutar el comando.
-- En algunos entornos se requiere terminal con permisos suficientes.
-
-## Entrega
-
-El repositorio no debe subir:
+No subir al repositorio:
 
 - `.env`
 - `node_modules/`
 - `dist/`
 - `backend/uploads/`
-
-Estos patrones estan ignorados en `.gitignore`.
