@@ -18,6 +18,7 @@ https://github.com/EmilioChenf/Proyecto-2-E-commerce-Chen
 
 ![Vista Login](docs/images/login.png)
 ![Vista Cliente](docs/images/cliente.png)
+![Vista Admin](docs/images/admin.png)
 
 > Las capturas deben colocarse en `docs/images/login.png` y `docs/images/cliente.png`.
 
