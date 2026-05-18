@@ -15,6 +15,21 @@ import { Confirmation } from '@/pages/Cliente/src/app/pages/Confirmation';
 import { Orders } from '@/pages/Cliente/src/app/pages/Orders';
 import { getPathForRole } from '@/context/AuthContext';
 
+function RouteErrorFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+      <div className="max-w-md text-center">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          No pudimos cargar esta vista
+        </h1>
+        <p className="mt-3 text-gray-600">
+          Intenta recargar la pagina o vuelve al inicio.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function RootEntry() {
   const { loading, isAuthenticated, user } = useAuth();
 
@@ -33,10 +48,12 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <RootEntry />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/login',
     element: <RootEntry />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: '/admin/*',
@@ -45,6 +62,7 @@ export const router = createBrowserRouter([
         <AdminPage />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorFallback />,
   },
   {
     element: (
@@ -52,6 +70,7 @@ export const router = createBrowserRouter([
         <ClientLayout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         path: '/cliente',
