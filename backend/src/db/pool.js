@@ -36,6 +36,7 @@ export async function waitForDatabase({
   for (let attempt = 1; attempt <= retries; attempt += 1) {
     try {
       await pool.query('SELECT 1');
+      console.log('[db] Conexion con PostgreSQL exitosa.');
       return;
     } catch (error) {
       lastError = error;

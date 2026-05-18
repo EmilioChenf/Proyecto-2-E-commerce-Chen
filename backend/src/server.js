@@ -1,13 +1,15 @@
 import app from './app.js';
 import { env } from './config/env.js';
+import { initializeDatabase } from './db/initializeDatabase.js';
 import { waitForDatabase } from './db/pool.js';
 
 async function bootstrap() {
   await waitForDatabase();
+  await initializeDatabase();
 
   app.listen(env.port, env.host, () => {
     console.log(
-      `[server] Backend escuchando en ${env.host}:${env.port}`,
+      `[server] Backend iniciado en ${env.host}:${env.port}`,
     );
   });
 }
